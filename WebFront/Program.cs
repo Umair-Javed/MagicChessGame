@@ -1,7 +1,12 @@
+using WebFront.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ICookieService, CookieService>();
+builder.Services.AddScoped<IMongoDBService, MongoDBService>();
 
 var app = builder.Build();
 

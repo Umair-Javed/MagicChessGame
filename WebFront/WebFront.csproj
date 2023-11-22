@@ -12,4 +12,9 @@
 	  <Folder Include="wwwroot\Content\Images\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="MongoDB.Driver" Version="2.22.0" />
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
 </Project>

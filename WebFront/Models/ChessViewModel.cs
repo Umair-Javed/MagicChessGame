@@ -41,4 +41,14 @@
         ADVISOR =6,
         KING =7
     }
+
+    public class ExistingSessionModel
+    {
+        public int Id { get; set; }
+        public int TableId { get; set; }
+        public string MainPlayerId { get; set; }
+        public string OpponentId { get; set; }
+        public PlayerType Turn { get; set; }
+        public string ChessBoardHtml { get; set; }
+    }
 }

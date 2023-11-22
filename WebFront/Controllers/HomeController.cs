@@ -2,20 +2,56 @@
 using System;
 using System.Diagnostics;
 using WebFront.Models;
+using WebFront.Services;
 
 namespace WebFront.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ITokenService _tokenService;
+        private readonly ICookieService _cookieService;
+        private readonly IMongoDBService _mongoDBService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ITokenService tokenService, ICookieService cookieService, IMongoDBService mongoDBService)
         {
             _logger = logger;
+            _tokenService = tokenService;
+            _cookieService = cookieService;
+            _mongoDBService = mongoDBService;
         }
 
         public IActionResult Index()
         {
+            //testing cookie setup
+            var encryptedToken = _cookieService.GetCookie(HttpContext, "ChessGameData");
+
+            if (encryptedToken != null)
+            {
+                var decryptedData = _tokenService.DecryptToken<dynamic>(encryptedToken);
+
+            }
+            else
+            {
+                var data = new { TableId = 2, username = "Hammad" };
+                encryptedToken = _tokenService.EncryptToken(data);
+                _cookieService.SetCookie(HttpContext, "ChessGameData", encryptedToken);
+            }
+
+            // testing mongo db setup
+            ExistingSessionModel mongoModel = new ExistingSessionModel
+            {
+                ChessBoardHtml = "<html><h1>Hi</h1></html>",
+                MainPlayerId = "145165",
+                OpponentId = "2423423",
+                TableId = 1,
+                Turn = PlayerType.MAIN
+            };
+
+            _mongoDBService.InsertExistingSession(mongoModel);
+
+            // actual code
+
             var model = new ChessViewModel();
             model.FlippedIconUrl = "/Content/Images/flipped.png";
 
@@ -36,6 +72,9 @@ namespace WebFront.Controllers
                 IsCoinExposed = false,
                 UserIcon = "/Content/Images/Player2/0.png"
             };
+
+
+
 
             model.Coins = GenerateShuffledList();
             return View(model);

@@ -6,106 +6,54 @@
 <h2 class="gameTitle">@ViewData["Title"]</h2>
 <br />
 
+<input type="hidden" id="TableId" value="@Model.TableId" />
+<input type="hidden" id="SessionId" value="@Model.SessionId" />
+
 <div class="row">
     <div class="col-md-2">
-        <div class="user-div" id="player1Div" style="background: #f9ff00;">
+        <div class="user-div" id="player1Div" style="background: @(Model.MainPlayer.IsMyTurn?"yellow":"transparent")">
             <img width="30" height="30" src="@Url.Content(Model.MainPlayer.UserIcon)" />
-            <h3 id="mainPlayerName" style="margin-left:10px;margin-top: -5px;color:@(Model.MainPlayer.IsMyTurn?"blue":"black")">@Model.MainPlayer.Name</h3>
+            <h3 id="mainPlayerName" style="margin-left:10px;margin-top: -5px;">@Model.MainPlayer.Name</h3>
             <input type="hidden" id="mainPlayerTurn" value="@Model.MainPlayer.IsMyTurn" />
         </div>
-        <div class="user-div" id="player2Div">
+        <div class="user-div" id="player2Div" style="background: @(Model.OpponentPlayer.IsMyTurn?"yellow":"transparent")">
             <img width="30" height="30" src="@Url.Content(Model.OpponentPlayer.UserIcon)" />
-            <h3 id="opponentPlayerName" style="margin-left:10px;margin-top: -5px;color:@(Model.OpponentPlayer.IsMyTurn?"blue":"black")">@Model.OpponentPlayer.Name</h3>
+            <h3 id="opponentPlayerName" style="margin-left:10px;margin-top: -5px;">@Model.OpponentPlayer.Name</h3>
             <input type="hidden" id="opponentPlayerTurn" value="@Model.OpponentPlayer.IsMyTurn" />
         </div>
     </div>
     <div class="col-md-10">
         <div id="chessboard-container">
             @{
-                int row = 1;
-                for (int i = 0; i <= Model.RowSize; i++)
+                if (Model.IsNewSession)
                 {
-                    <div class="chessboard-row">
-                        @{
-                            int col = 1;
-                            foreach (var item in Model.Coins.Skip(i * 8).Take(8))
-                            {
-                                <div class="chessboard-cell player@((int)item.Type)">
-                                    <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
-                                </div>
-                                col++;
-                            }
+                    int row = 1;
+                    for (int i = 0; i <= Model.RowSize; i++)
+                    {
+                        <div class="chessboard-row">
+                            @{
+                                int col = 1;
+                                foreach (var item in Model.Coins.Skip(i * 8).Take(8))
+                                {
+                                    <div class="chessboard-cell player@((int)item.Type)">
+                                        <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
+                                    </div>
+                                    col++;
+                                }
 
-                        }
-                    </div>
-                    row++;
+                            }
+                        </div>
+                        row++;
+                    }
+                }
+                else
+                {
+                    @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
                 }
             }
         </div>
     </div>
 </div>
-
-
-<style>
-
-    .gameTitle {
-        border-bottom: 3px solid;
-        text-align: center;
-        padding-bottom: 8px;
-        padding-top: 8px;
-        background: #e0e0e0;
-    }
-
-    .emptyImg {
-        width: 100px; /* Set a specific width */
-        height: 100px; /* Set a specific height */
-        background-color: lightgray; /* Set a background color */
-        border: 1px solid black; /* Add a border for visibility */
-    }
-
-
-    .addBorders {
-        border: 3px solid blue !important;
-    }
-
-    #chessboard-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .chessboard-row {
-        display: flex;
-        justify-content: center;
-    }
-
-    .user-div {
-        display: flex;
-        margin-top: 10px;
-        height: 100px;
-        align-items: center;
-    }
-
-    .chessboard-cell {
-        border: 1px solid #000;
-        box-sizing: border-box;
-        cursor: pointer;
-    }
-
-    .player1 {
-        background-color: #fff;
-    }
-
-    .player2 {
-        background-color: #fff;
-    }
-
-</style>
-
-
-<script src="~/lib/jquery/dist/jquery.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.14/signalr.min.js"></script>
 
 <script>
     $(document).ready(function () {
@@ -264,10 +212,11 @@
             }
         }
 
-        function ChangeTurn() {
-
+        function ChangeTurn() 
+        {
             var mainPlayerTurn = $("#mainPlayerTurn").val();
             var opponentPlayerTurn = $("#opponentPlayerTurn").val();
+            $('.addBorders').removeClass("addBorders");
 
             if (mainPlayerTurn == "value") {
                 $("#mainPlayerTurn").val("");
@@ -276,6 +225,7 @@
                 $("#opponentPlayerName").css("color", "blue");
                 $("#player1Div").css("background", "transparent");
                 $("#player2Div").css("background", "yellow");
+                UpdateSession(@((int)PlayerType.MAIN));
             }
             else {
                 $("#mainPlayerTurn").val("value");
@@ -284,10 +234,9 @@
                 $("#opponentPlayerName").css("color", "black");
                 $("#player2Div").css("background", "transparent");
                 $("#player1Div").css("background", "yellow");
+                UpdateSession(@((int)PlayerType.OPPONENT));
             }
 
-            $('.addBorders').removeClass("addBorders");
-            hubConnection.invoke("FlipCoin");
         }
 
         function ClearCell(cellId) {
@@ -333,6 +282,36 @@
                 alert(playername + " WINS");
                 location.reload();
             }
+        }
+
+        function UpdateSession(playerId) {
+
+            var sessionId = $("#SessionId").val();
+            var chessBoardHtml = $("#chessboard-container").html();
+            var tableId = $("#TableId").val();
+            var mainPlayerId = $("#mainPlayerName").text();
+            var opponentId = $("#opponentPlayerName").text();
+
+            $.ajax({
+                url: '@Url.Action("UpdateSession", "Home")',
+                type: 'POST',
+                data: {
+                    Id: sessionId,
+                    ChessBoardHtml: chessBoardHtml,
+                    TableId: tableId,
+                    MainPlayerId: mainPlayerId,
+                    OpponentId: opponentId,
+                    Turn: playerId
+                },
+                success: function (result) {
+                    // Handle the success response
+                    console.log(result);
+                },
+                error: function (xhr, status, error) {
+                    // Handle the error response
+                    console.error(xhr.responseText);
+                }
+            });
         }
 
     })

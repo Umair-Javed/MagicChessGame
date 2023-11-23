@@ -1,4 +1,7 @@
-﻿namespace WebFront.Models
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
+
+namespace WebFront.Models
 {
     public class ChessViewModel
     {
@@ -7,6 +10,10 @@
         public Player MainPlayer { get; set; }
         public Player OpponentPlayer { get; set; }
         public List<CoinsModel> Coins { get; set; }
+        public bool IsNewSession { get; set; }
+        public string ChessBoardHtml { get; set; }
+        public int TableId { get; set; }
+        public string SessionId { get; set; }
     }
 
     public class Player
@@ -40,5 +47,22 @@
         BISHOP =5,
         ADVISOR =6,
         KING =7
+    }
+
+    public class SessionModel
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
+        public int TableId { get; set; }
+        public string MainPlayerId { get; set; }
+        public string OpponentId { get; set; }
+        public PlayerType Turn { get; set; }
+        public string ChessBoardHtml { get; set; }
+    }
+
+    public class CookieModel
+    {
+        public string SessionId { get; set; }
     }
 }

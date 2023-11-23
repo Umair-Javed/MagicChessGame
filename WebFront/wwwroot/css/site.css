@@ -16,3 +16,55 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.gameTitle {
+    border-bottom: 3px solid;
+    text-align: center;
+    padding-bottom: 8px;
+    padding-top: 8px;
+    background: #e0e0e0;
+}
+
+.emptyImg {
+    width: 100px; /* Set a specific width */
+    height: 100px; /* Set a specific height */
+    background-color: lightgray; /* Set a background color */
+    border: 1px solid black; /* Add a border for visibility */
+}
+
+
+.addBorders {
+    border: 3px solid blue !important;
+}
+
+#chessboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chessboard-row {
+    display: flex;
+    justify-content: center;
+}
+
+.user-div {
+    display: flex;
+    margin-top: 10px;
+    height: 100px;
+    align-items: center;
+}
+
+.chessboard-cell {
+    border: 1px solid #000;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.player1 {
+    background-color: #fff;
+}
+
+.player2 {
+    background-color: #fff;
+}

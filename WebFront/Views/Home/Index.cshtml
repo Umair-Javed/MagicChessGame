@@ -55,6 +55,10 @@
     </div>
 </div>
 
+<audio id="audioPlayer1" src="/sounds/move-self.mp3"></audio>
+<audio id="audioPlayer2" src="/sounds/move-check.mp3"></audio>
+<audio id="audioVictory" src="/sounds/victory.mp3"></audio>
+
 <script>
     $(document).ready(function () {
 
@@ -166,7 +170,7 @@
                         var playerId = addBordersAlreadyApplied.dataset.player;
                         This.classList.add('ImgPlayer_' + This.dataset.player);
                         ClearCell(addBordersAlreadyApplied.dataset.id);
-
+                        capturePiece(This);
                         if (mainCellPriority == @((int)enCoins.PAWN) && opponentCellPriority == @((int)enCoins.KING)) {
                             ShowWinAlert(playerId);
                             return false;
@@ -194,8 +198,7 @@
             }
         }
 
-        function ChangeTurn() 
-        {
+        function ChangeTurn() {
             var mainPlayerTurn = $("#mainPlayerTurn").val();
             var opponentPlayerTurn = $("#opponentPlayerTurn").val();
             $('.addBorders').removeClass("addBorders");
@@ -203,22 +206,40 @@
             if (mainPlayerTurn == "value") {
                 $("#mainPlayerTurn").val("");
                 $("#opponentPlayerTurn").val("value");
-                $("#mainPlayerName").css("color", "black");
-                $("#opponentPlayerName").css("color", "blue");
                 $("#player1Div").css("background", "transparent");
                 $("#player2Div").css("background", "yellow");
                 UpdateSession(@((int)PlayerType.MAIN));
+                var audio = $("#audioPlayer1")[0];
+                audio.play();
             }
             else {
                 $("#mainPlayerTurn").val("value");
                 $("#opponentPlayerTurn").val("");
-                $("#mainPlayerName").css("color", "blue");
-                $("#opponentPlayerName").css("color", "black");
                 $("#player2Div").css("background", "transparent");
                 $("#player1Div").css("background", "yellow");
                 UpdateSession(@((int)PlayerType.OPPONENT));
+                var audio = $("#audioPlayer2")[0];
+                audio.play();
             }
+        }
 
+        function capturePiece(piece) {
+            var containerWidth = $(".chessboard-cell").width();
+            var containerHeight = $(".chessboard-cell").height();
+
+            var maxX = containerWidth - piece.width;
+            var maxY = containerHeight - piece.height;
+
+            var randomX = Math.floor(Math.random() * maxX);
+            var randomY = Math.floor(Math.random() * maxY);
+
+            piece.animate({
+                left: randomX,
+                top: randomY,
+                opacity: 0
+            }, 300, function () {
+                piece.hide(); // Hide the piece after animation completes
+            });
         }
 
         function ClearCell(cellId) {
@@ -254,16 +275,21 @@
         }
 
         function ShowWinAlert(playerId) {
+
+            var audio = $("#audioVictory")[0];
+            audio.play();
+
             if (playerId == 1) {
                 var playername = $("#mainPlayerName").text();
                 alert(playername + " WINS");
-                location.reload();
+                // location.reload();
             }
             else {
                 var playername = $("#opponentPlayerName").text();
                 alert(playername + " WINS");
-                location.reload();
+                //location.reload();
             }
+
         }
 
         function UpdateSession(playerId) {

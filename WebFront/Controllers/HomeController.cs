@@ -23,61 +23,97 @@ namespace WebFront.Controllers
 
         public IActionResult Index()
         {
-            //testing cookie setup
+            var model = new ChessViewModel();
+            model.FlippedIconUrl = "/Content/Images/flipped.png";
+            var Session = GetSession();
+            if (Session == null)
+            {
+                model.MainPlayer = new Player
+                {
+                    Name = "UMAIR",
+                    Type = PlayerType.MAIN,
+                    IsMyTurn = true,
+                    IsCoinExposed = false,
+                    UserIcon = "/Content/Images/Player1/0.png"
+                };
+
+                model.OpponentPlayer = new Player
+                {
+                    Name = "HAMMAD",
+                    Type = PlayerType.OPPONENT,
+                    IsMyTurn = false,
+                    IsCoinExposed = false,
+                    UserIcon = "/Content/Images/Player2/0.png"
+                };
+
+                model.Coins = GenerateShuffledList();
+                model.IsNewSession = true;
+            }
+            else
+            {
+                model.MainPlayer = new Player
+                {
+                    Name =  Session.MainPlayerId,
+                    Type = PlayerType.MAIN,
+                    IsMyTurn = Session.Turn == PlayerType.MAIN ? true : false,
+                    UserIcon = "/Content/Images/Player1/0.png"
+                };
+
+                model.OpponentPlayer = new Player
+                {
+                    Name = Session.OpponentId,
+                    Type = PlayerType.OPPONENT,
+                    IsMyTurn = Session.Turn == PlayerType.OPPONENT ? true : false,
+                    UserIcon = "/Content/Images/Player2/0.png"
+                };
+
+                model.SessionId = Session.Id;
+                model.ChessBoardHtml = Session.ChessBoardHtml;
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public ActionResult UpdateSession(SessionModel model)
+        {
+            if (model == null)
+                return Content("Fail");
+
+            var sessionId = _mongoDBService.UpdateSession(model);
+            SetSessionCookie(sessionId);
+            return Content("Success");
+        }
+
+        public void SetSessionCookie(string sessionId)
+        {
+            var sessionCookie = new CookieModel
+            {
+                SessionId = sessionId,
+            };
+
+            var encryptedToken = _tokenService.EncryptToken(sessionCookie);
+            _cookieService.SetCookie(HttpContext, "ChessGameData", encryptedToken);
+        }
+
+        public SessionModel GetSession()
+        {
             var encryptedToken = _cookieService.GetCookie(HttpContext, "ChessGameData");
 
             if (encryptedToken != null)
             {
-                var decryptedData = _tokenService.DecryptToken<dynamic>(encryptedToken);
-
+                var decryptedData = _tokenService.DecryptToken<CookieModel>(encryptedToken);
+                if (decryptedData != null && !string.IsNullOrEmpty(decryptedData.SessionId))
+                {
+                    SessionModel sessionModel = new SessionModel();
+                    sessionModel = _mongoDBService.GetSessionById(decryptedData.SessionId);
+                    if (sessionModel != null)
+                    {
+                        return sessionModel;
+                    }
+                }
             }
-            else
-            {
-                var data = new { TableId = 2, username = "Hammad" };
-                encryptedToken = _tokenService.EncryptToken(data);
-                _cookieService.SetCookie(HttpContext, "ChessGameData", encryptedToken);
-            }
-
-            // testing mongo db setup
-            ExistingSessionModel mongoModel = new ExistingSessionModel
-            {
-                ChessBoardHtml = "<html><h1>Hi</h1></html>",
-                MainPlayerId = "145165",
-                OpponentId = "2423423",
-                TableId = 1,
-                Turn = PlayerType.MAIN
-            };
-
-            _mongoDBService.InsertExistingSession(mongoModel);
-
-            // actual code
-
-            var model = new ChessViewModel();
-            model.FlippedIconUrl = "/Content/Images/flipped.png";
-
-            model.MainPlayer = new Player
-            {
-                Name = "UMAIR",
-                Type = PlayerType.MAIN,
-                IsMyTurn = true,
-                IsCoinExposed = false,
-                UserIcon = "/Content/Images/Player1/0.png"
-            };
-
-            model.OpponentPlayer = new Player
-            {
-                Name = "HAMMAD",
-                Type = PlayerType.OPPONENT,
-                IsMyTurn = false,
-                IsCoinExposed = false,
-                UserIcon = "/Content/Images/Player2/0.png"
-            };
-
-
-
-
-            model.Coins = GenerateShuffledList();
-            return View(model);
+            return null;
         }
 
         public List<CoinsModel> GenerateShuffledList()

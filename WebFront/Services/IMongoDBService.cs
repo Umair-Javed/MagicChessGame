@@ -4,7 +4,7 @@ namespace WebFront.Services
 {
     public interface IMongoDBService
     {
-        void InsertExistingSession(ExistingSessionModel session);
-        ExistingSessionModel GetExistingSessionById(int sessionId);
+        string UpdateSession(SessionModel session);
+        SessionModel GetSessionById(string sessionId);
     }
 }

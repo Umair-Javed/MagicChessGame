@@ -1,4 +1,6 @@
-﻿namespace WebFront.Services
+﻿using WebFront.Models;
+
+namespace WebFront.Services
 {
     public interface ICookieService
     {

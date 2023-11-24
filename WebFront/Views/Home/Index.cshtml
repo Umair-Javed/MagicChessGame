@@ -62,6 +62,21 @@
 <script>
     $(document).ready(function () {
 
+        var socket = new WebSocket('ws://localhost:5265/websocket'); // Adjust the URL based on your WebSocket endpoint
+
+        socket.onopen = function (event) {
+            console.log('WebSocket connection opened:', event);
+            socket.send('Hello, WebSocket!'); // You can send a message after the connection is open
+        };
+
+        socket.onmessage = function (event) {
+            console.log('Received message:', event.data);
+        };
+
+        socket.onclose = function (event) {
+            console.log('WebSocket connection closed:', event);
+        };
+
         $(document).on("click", ".chess-piece", function () {
             debugger;
 

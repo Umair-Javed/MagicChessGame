@@ -13,7 +13,11 @@ namespace WebFront.Controllers
         private readonly ICookieService _cookieService;
         private readonly IMongoDBService _mongoDBService;
 
-        public HomeController(ILogger<HomeController> logger, ITokenService tokenService, ICookieService cookieService, IMongoDBService mongoDBService)
+        public HomeController(
+            ILogger<HomeController> logger, 
+            ITokenService tokenService, 
+            ICookieService cookieService, 
+            IMongoDBService mongoDBService)
         {
             _logger = logger;
             _tokenService = tokenService;
@@ -21,13 +25,14 @@ namespace WebFront.Controllers
             _mongoDBService = mongoDBService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var model = new ChessViewModel();
             model.FlippedIconUrl = "/Content/Images/flipped.png";
             var Session = GetSession();
             if (Session == null)
             {
+               
                 model.MainPlayer = new Player
                 {
                     Name = "UMAIR",

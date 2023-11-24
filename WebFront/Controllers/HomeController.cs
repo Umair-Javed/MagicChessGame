@@ -12,17 +12,31 @@ namespace WebFront.Controllers
         private readonly ITokenService _tokenService;
         private readonly ICookieService _cookieService;
         private readonly IMongoDBService _mongoDBService;
+        private readonly IServerStatusService _serverStatusService;
 
-        public HomeController(ILogger<HomeController> logger, ITokenService tokenService, ICookieService cookieService, IMongoDBService mongoDBService)
+        public HomeController(
+            ILogger<HomeController> logger,
+            ITokenService tokenService,
+            ICookieService cookieService,
+            IMongoDBService mongoDBService,
+            IServerStatusService serverStatusService
+            )
         {
             _logger = logger;
             _tokenService = tokenService;
             _cookieService = cookieService;
             _mongoDBService = mongoDBService;
+            _serverStatusService = serverStatusService;
         }
 
         public IActionResult Index()
         {
+            if (!_serverStatusService.IsServerRunning)
+            {
+                // Redirect to an error page or take other actions
+                return RedirectToAction("ServerError");
+            }
+
             var model = new ChessViewModel();
             model.FlippedIconUrl = "/Content/Images/flipped.png";
             var Session = GetSession();
@@ -53,7 +67,7 @@ namespace WebFront.Controllers
             {
                 model.MainPlayer = new Player
                 {
-                    Name =  Session.MainPlayerId,
+                    Name = Session.MainPlayerId,
                     Type = PlayerType.MAIN,
                     IsMyTurn = Session.Turn == PlayerType.MAIN ? true : false,
                     UserIcon = "/Content/Images/Player1/0.png"
@@ -74,15 +88,25 @@ namespace WebFront.Controllers
             return View(model);
         }
 
+        public IActionResult ServerError()
+        {
+            return View();
+        }
+
         [HttpPost]
         public ActionResult UpdateSession(SessionModel model)
         {
+            if (!_serverStatusService.IsServerRunning)
+            {
+                return Json(new { IsSuccess = false, IsRedirect = true, RedirectUrl = "/Home/ServerError" });
+            }
+
             if (model == null)
-                return Content("Fail");
+                return Json(new { IsSuccess = false, IsRedirect = false, Message = "Session Not Updated!" });
 
             var sessionId = _mongoDBService.UpdateSession(model);
             SetSessionCookie(sessionId);
-            return Content("Success");
+            return Json(new { IsSuccess = true, Message = "Success" });
         }
 
         public void SetSessionCookie(string sessionId)

@@ -1,0 +1,11 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/LogonServer/bin/Debug/net6.0
+/LogonServer/obj/Release/net6.0
+/LogonServer/obj/Debug/net6.0
+/WebFront/bin/Debug/net6.0/runtimes
+/WebFront/bin/Release/net6.0
+/WebFront/obj/publish/win-x64
+/WebFront/obj/Release/net6.0

@@ -5,7 +5,9 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebFront", "WebFront\WebFront.csproj", "{FDF44D39-C717-4DCD-81F2-BD81A5930DF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogonServer", "LogonServer\LogonServer.csproj", "{87D88A7D-25E9-4898-8568-58E69A484BEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LogonServer", "LogonServer\LogonServer.csproj", "{87D88A7D-25E9-4898-8568-58E69A484BEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Library", "Common.Library\Common.Library.csproj", "{DCB2C795-5DDE-4A4D-947F-BEF81D1B8777}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{87D88A7D-25E9-4898-8568-58E69A484BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87D88A7D-25E9-4898-8568-58E69A484BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87D88A7D-25E9-4898-8568-58E69A484BEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCB2C795-5DDE-4A4D-947F-BEF81D1B8777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCB2C795-5DDE-4A4D-947F-BEF81D1B8777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCB2C795-5DDE-4A4D-947F-BEF81D1B8777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCB2C795-5DDE-4A4D-947F-BEF81D1B8777}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

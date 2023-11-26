@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using System.Security.Cryptography.Xml;
-using WebFront.Services;
+﻿using Common.Library.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 
 public class GameHub : Hub
 {
@@ -19,7 +18,11 @@ public class GameHub : Hub
         //Groupname should be combination of user1,user2,token
         //Fetch tableId
         //Fetch tableHTML
-        var tableHTML = _mongoDBService.GetSessionById("655f9f566d63483e20a2b7ed");
+        var tableHTML = _mongoDBService.GetSessionBySessionOrGroupId("655f9f566d63483e20a2b7ed",null);
+
+        /// Session Insert entry
+       
+        //
         await Clients.Group("HU").SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
     }
 

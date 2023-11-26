@@ -1,4 +1,11 @@
-﻿namespace WebFront.Services
+﻿using Common.Library.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Common.Library.Services
 {
     public class ServerStatusService : IServerStatusService
     {

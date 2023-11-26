@@ -1,68 +1,22 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson;
+using Common.Library.Enums;
+using Common.Library.Models;
 
 namespace WebFront.Models
 {
     public class ChessViewModel
     {
         public int RowSize { get; set; } = 4;
-        public string FlippedIconUrl { get; set; }
-        public Player MainPlayer { get; set; }
-        public Player OpponentPlayer { get; set; }
+        public string? FlippedIconUrl { get; set; } = "/Content/Images/flipped.png";
+        public PlayerModel? MainPlayer { get; set; }
+        public PlayerModel? OpponentPlayer { get; set; }
+        public string? ChessBoardHtml { get; set; }
+        public string? GroupId { get; set; }
+        public string? SessionId { get; set; }
+        public bool IsGameStarted { get; internal set; }
+        public bool IsNewSession { get; set; } = true; 
+        public bool IsDisabled { get; internal set; } = true;
         public List<CoinsModel> Coins { get; set; }
-        public bool IsNewSession { get; set; }
-        public string ChessBoardHtml { get; set; }
-        public int TableId { get; set; }
-        public string SessionId { get; set; }
-    }
-
-    public class Player
-    {
-        public string Name { get; set; }
-        public PlayerType Type { get; set; }
-        public bool IsMyTurn { get; set; }
-        public bool IsCoinExposed { get; set; }
-        public string UserIcon { get; set; }
-    }
-
-    public class CoinsModel
-    {
-        public int Number { get; set; }
-        public string ImgPath { get; set; }
-        public PlayerType Type { get; set; }
-    }
-
-    public enum PlayerType
-    {
-        MAIN = 1,
-        OPPONENT =2
-    }
-
-    public enum enCoins
-    {
-        PAWN =1,
-        CANNON =2,
-        KNIGHT =3,
-        ROOK =4,
-        BISHOP =5,
-        ADVISOR =6,
-        KING =7
-    }
-
-    public class SessionModel
-    {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-        public int TableId { get; set; }
-        public string MainPlayerId { get; set; }
-        public string OpponentId { get; set; }
-        public PlayerType Turn { get; set; }
-        public string ChessBoardHtml { get; set; }
-    }
-
-    public class CookieModel
-    {
-        public string SessionId { get; set; }
     }
 }

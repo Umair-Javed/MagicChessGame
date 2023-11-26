@@ -1,8 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using Common.Library.Interfaces;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace WebFront.Services
+namespace Common.Library.Services
 {
     public class TokenService : ITokenService
     {
@@ -11,7 +16,7 @@ namespace WebFront.Services
 
         public string EncryptToken(object data)
         {
-            string jsonData = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+            string jsonData = JsonConvert.SerializeObject(data);
 
             using (Aes aesAlg = Aes.Create())
             {

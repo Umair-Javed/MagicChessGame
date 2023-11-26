@@ -1,4 +1,5 @@
-﻿@model WebFront.Models.ChessViewModel
+﻿@using Common.Library.Enums;
+@model WebFront.Models.ChessViewModel
 @{
     ViewData["Title"] = "Magic Chess Board";
 }
@@ -6,7 +7,7 @@
 <h2 class="gameTitle">@ViewData["Title"]</h2>SessionId
 <br />
 
-<input type="hidden" id="TableId" value="@Model.TableId" />
+<input type="hidden" id="TableId" value="@Model.GroupId" />
 <input type="hidden" id="SessionId" value="@Model.SessionId" />
 
 <div class="row">
@@ -30,25 +31,25 @@
                     int row = 1;
                     for (int i = 0; i <= Model.RowSize; i++)
                     {
-                                <div class="chessboard-row">
-                                    @{
+                        <div class="chessboard-row">
+                            @{
                                 int col = 1;
                                 foreach (var item in Model.Coins.Skip(i * 8).Take(8))
                                 {
-                                                    <div class="chessboard-cell player@((int)item.Type)">
-                                                        <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
-                                                    </div>
+                                    <div class="chessboard-cell player@((int)item.Type)">
+                                        <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
+                                    </div>
                                     col++;
                                 }
 
-                                    }
-                                </div>
+                            }
+                        </div>
                         row++;
                     }
                 }
                 else
                 {
-                            @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
+                    @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
                 }
             }
         </div>
@@ -80,7 +81,7 @@
             console.log('coin filpped');
             // Handle coin flip on the opponent's screen
             // Update UI or perform other actions
-            
+
         });
 
         $(document).on("click", ".chess-piece", function () {
@@ -321,7 +322,7 @@
             var opponentId = $("#opponentPlayerName").text();
 
             $.ajax({
-                url: '@Url.Action("UpdateSession", "Home")',
+                url: '@Url.Action("UpdateSession", "Chess")',
                 type: 'POST',
                 data: {
                     Id: sessionId,

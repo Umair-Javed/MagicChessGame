@@ -12,7 +12,7 @@
 <input type="hidden" id="SessionId" value="@Model.SessionId" />
 <input type="hidden" id="IsGameStarted" value="@Model.IsGameStarted" />
 
-<div class="row @(Model.IsDisabled?"disabled-div":"")">
+<div class="row">
     <div class="col-md-2">
         <div class="user-div" id="player1Div" style="background: @(Model.MainPlayer.IsMyTurn?"yellow":"transparent")">
             <img width="30" height="30" src="@Url.Content(Model.MainPlayer.UserIcon)" />
@@ -26,7 +26,7 @@
         </div>
     </div>
     <div class="col-md-10">
-        <div id="chessboard-container">
+        <div id="chessboard-container" class="@(Model.IsDisabled?"disabled-div":"")">
             @{
                 if (Model.IsNewSession)
                 {

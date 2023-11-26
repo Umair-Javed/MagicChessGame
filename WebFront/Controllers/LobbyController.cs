@@ -88,7 +88,7 @@ namespace WebFront.Controllers
 
                 await _hubContext.Groups.AddToGroupAsync(ConnectionId, groupId); // assign a group to main player
                 await _hubContext.Groups.AddToGroupAsync(opponentDetail.ConnectionId, groupId); // assign same group to the opponent
-                                                                                                // Get the list of connections in the group
+                //await _hubContext.Clients.All.SendAsync("CoinFlipped", "");                                                                                 // Get the list of connections in the group
 
                 return RedirectToAction("GameIndex", "Chess",
                     new

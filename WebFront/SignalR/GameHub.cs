@@ -30,7 +30,7 @@ public class GameHub : Hub, IGameHub
             if (tableHTML != null)
             {
                 await Clients.All.SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
-               // await Clients.Group(GroupId).SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
+                //await Clients.Group(GroupId).SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
             }
         }
     }

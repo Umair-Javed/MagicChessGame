@@ -1,11 +1,8 @@
 ﻿using Common.Library.Enums;
 using Common.Library.Interfaces;
-using Common.Library.Models;
 using Common.Library.MongoDbEntities;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using System.Numerics;
-using System.Security.Cryptography.Xml;
 using WebFront.Models;
 
 namespace WebFront.Controllers
@@ -37,58 +34,44 @@ namespace WebFront.Controllers
         }
 
 
-        public IActionResult GameIndex(string MainPlayer = "", string Opponent = "", string GroupId = "", string SessionId="")
+        public IActionResult GameIndex(string MainPlayer = "", string Opponent = "", string GroupId = "", string SessionId = "")
         {
             if (!_serverStatusService.IsServerRunning)
-            {
-                // Redirect to an error page or take other actions
                 return RedirectToAction("ServerError");
-            }
+
+            if (string.IsNullOrEmpty(MainPlayer))
+                return RedirectToAction("Index","Lobby");
 
             var model = new ChessViewModel();
             model.SessionId = SessionId;
 
-            var existingToken = _cookieService.GetExistingToken(HttpContext);
-            if (existingToken == null || (!string.IsNullOrEmpty(MainPlayer) && !string.IsNullOrEmpty(Opponent)))
-            {
-                model.GroupId = GroupId;
-                model.MainPlayer = _playerService.InitialzePlayer(MainPlayer, PlayerType.MAIN);
-                model.OpponentPlayer = _playerService.InitialzePlayer(Opponent, PlayerType.OPPONENT);
-                model.Coins = _playerService.GenerateShuffledList();
-                if (!string.IsNullOrEmpty(Opponent))
-                {
-                    model.IsGameStarted = true;
-                    model.IsDisabled = false;
-                }
-            }
-            else
-            {
-                var existingSession = new GameSession();
-                existingSession = _mongoDBService.GetSessionBySessionOrGroupId(existingToken.SessionId, existingSession.GroupId);
-                if (existingSession != null)
-                {
-                   // model.GroupId = GroupId;
-                    model.SessionId = existingSession.Id;
-                    model.MainPlayer = _playerService.InitialzePlayerWithExistingSession(existingSession, PlayerType.MAIN);
-                    model.OpponentPlayer = _playerService.InitialzePlayerWithExistingSession(existingSession, PlayerType.OPPONENT);
-                    model.ChessBoardHtml = existingSession.ChessBoardHtml;
-                    model.IsGameStarted = true;
-                    model.IsDisabled = false;
-                    model.IsNewSession = false;
-                }
-                else
-                {
-                    model.GroupId = GroupId;
-                    model.MainPlayer = _playerService.InitialzePlayer(MainPlayer, PlayerType.MAIN);
-                    model.OpponentPlayer = _playerService.InitialzePlayer(Opponent, PlayerType.OPPONENT);
-                    model.Coins = _playerService.GenerateShuffledList();
-                    if (!string.IsNullOrEmpty(Opponent))
-                    {
-                        model.IsGameStarted = true;
-                        model.IsDisabled = false;
-                    }
+            //var existingToken = _cookieService.GetExistingToken(HttpContext);
+            //if (existingToken != null)
+            //{
+            //    var existingSession = new GameSession();
+            //    existingSession = _mongoDBService.GetSessionBySessionOrGroupId(existingToken.SessionId, existingSession.GroupId);
+            //    if (existingSession != null)
+            //    {
+            //        // model.GroupId = GroupId;
+            //        model.SessionId = existingSession.Id;
+            //        model.MainPlayer = _playerService.InitialzePlayerWithExistingSession(existingSession, PlayerType.MAIN);
+            //        model.OpponentPlayer = _playerService.InitialzePlayerWithExistingSession(existingSession, PlayerType.OPPONENT);
+            //        model.ChessBoardHtml = existingSession.ChessBoardHtml;
+            //        model.IsGameStarted = true;
+            //        model.IsDisabled = false;
+            //        model.IsNewSession = false;
+            //        return View(model);
+            //    }
+            //}
 
-                }
+            model.GroupId = GroupId;
+            model.MainPlayer = _playerService.InitialzePlayer(MainPlayer, PlayerType.MAIN);
+            model.OpponentPlayer = _playerService.InitialzePlayer(Opponent, PlayerType.OPPONENT);
+            model.Coins = _playerService.GenerateShuffledList();
+            if (!string.IsNullOrEmpty(Opponent))
+            {
+                model.IsGameStarted = true;
+                model.IsDisabled = false;
             }
 
             return View(model);

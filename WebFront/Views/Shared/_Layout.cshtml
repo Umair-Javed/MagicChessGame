@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MAGIC CHESS</title>
+    <title>MAGIC CHESS</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
@@ -13,11 +13,44 @@
         <main role="main" class="pb-3">
             <script src="~/lib/jquery/dist/jquery.min.js"></script>
             <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+            <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
             <script src="~/js/site.js" asp-append-version="true"></script>
+
             @RenderBody()
         </main>
     </div>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/gameHub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+            hubConnection.start().then(() => {
+                console.log("Connection started");
+                $("#ConnectionId").val(hubConnection.connectionId);
+            }).catch(err => console.error(err));
+
+            hubConnection.on("CoinFlipped", (e) => {
+                debugger;
+                if (e) {
+                    $("#chessboard-container").html(e);
+                }
+                console.log('coin filpped');
+                // Handle coin flip on the opponent's screen
+                // Update UI or perform other actions
+
+            });
+
+        function CallHubFlipCoin(sessionId, groupId) {
+            hubConnection.invoke("FlipCoin", sessionId, groupId);
+        }
+
+    </script>
+
 </body>
 </html>
+

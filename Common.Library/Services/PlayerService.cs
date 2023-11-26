@@ -13,7 +13,7 @@ namespace Common.Library.Services
             return new PlayerModel
             {
                 IsCoinExposed = false,
-                IsMyTurn = true,
+                IsMyTurn = type == PlayerType.MAIN ? true : false,
                 Name = name,
                 Type = type,
                 UserIcon = $"/Content/Images/Player{(int)type}/0.png"

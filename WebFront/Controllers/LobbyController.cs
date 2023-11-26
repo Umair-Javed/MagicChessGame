@@ -1,9 +1,10 @@
 ﻿using Common.Library.Interfaces;
 using Common.Library.MongoDbEntities;
 using Common.Library.Services;
+using Microsoft.AspNet.SignalR.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using System.Text.RegularExpressions;
+using WebFront.SignalR;
 
 namespace WebFront.Controllers
 {
@@ -13,14 +14,13 @@ namespace WebFront.Controllers
         private readonly IMongoDBService _mongoDBService;
         private readonly ICookieService _cookieService;
         public LobbyController(
-            IHubContext<GameHub> hubContext,
             IMongoDBService mongoDBService,
-            ICookieService cookieService)
+            ICookieService cookieService,
+            IHubContext<GameHub> hubContext)
         {
-            _hubContext = hubContext;
             _mongoDBService = mongoDBService;
             _cookieService = cookieService;
-
+            _hubContext = hubContext;
         }
         public IActionResult Index()
         {
@@ -33,25 +33,38 @@ namespace WebFront.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> InitializeGame(string Username)
+        public async Task<IActionResult> InitializeGame(string Username, string ConnectionId)
         {
             MatchMakingServices matchMakingServices = new MatchMakingServices();
-            var mainPlayerDetail = new UserDetail
+            var mainPlayerDetail = new UserDetail();
+            var existingUser = await _mongoDBService.GetUserDetail(Username);
+            if (existingUser != null)
             {
-                UserName = Username,
-                IsOnline = true,
-                IsPlaying = false,
-                CreatedOn = DateTime.Now,
-            };
+                if (existingUser.IsOnline || existingUser.IsPlaying)
+                {
+                    TempData["WarningMsg"] = "Username Already Exist";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    mainPlayerDetail = existingUser;
+                    mainPlayerDetail.ConnectionId = ConnectionId;
+                }
+            }
+            else
+            {
+                mainPlayerDetail = new UserDetail
+                {
+                    UserName = Username,
+                    IsOnline = true,
+                    IsPlaying = false,
+                    CreatedOn = DateTime.Now,
+                    ConnectionId = ConnectionId
+                };
 
-            bool IsExist = await _mongoDBService.IsUsernameAlreadyExist(Username);
-            if (IsExist)
-            {
-                TempData["WarningMsg"] = "Username Already Exist";
-                return RedirectToAction("Index");
+                await _mongoDBService.AddUserDetail(mainPlayerDetail);
             }
 
-            await _mongoDBService.AddUserDetail(mainPlayerDetail);
             var opponentDetail = matchMakingServices.GetOpponent(Username);
             if (opponentDetail != null)
             {
@@ -60,32 +73,39 @@ namespace WebFront.Controllers
                 // update main player status
                 mainPlayerDetail.GroupId = groupId;
                 mainPlayerDetail.IsPlaying = true;
+                mainPlayerDetail.IsOnline = true;
                 await _mongoDBService.UpdateUserDetail(mainPlayerDetail);
 
                 // update opponent status
                 opponentDetail.GroupId = groupId;
                 opponentDetail.IsPlaying = true;
+                opponentDetail.IsOnline = true;
+
                 await _mongoDBService.UpdateUserDetail(opponentDetail);
 
                 // write cookie in client browser
-                _cookieService.SetSessionCookie(HttpContext, groupId);
+                _cookieService.SetSessionCookie(HttpContext, groupId, "", ConnectionId);
+
+                await _hubContext.Groups.AddToGroupAsync(ConnectionId, groupId); // assign a group to main player
+                await _hubContext.Groups.AddToGroupAsync(opponentDetail.ConnectionId, groupId); // assign same group to the opponent
+                                                                                                // Get the list of connections in the group
 
                 return RedirectToAction("GameIndex", "Chess",
                     new
                     {
                         MainPlayer = mainPlayerDetail.UserName,
                         Opponent = opponentDetail.UserName,
-                        GroupId = groupId
+                        GroupId = groupId,
+                      //  SessionId = 
                     });
             }
-
-            // Call the hub function to call Logon Hub for match Making
-            //await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Controller", "Hello from controller!");
 
             return RedirectToAction("GameIndex", "Chess",
                     new
                     {
-                        MainPlayer = mainPlayerDetail.UserName
+                        MainPlayer = mainPlayerDetail.UserName,
+                        Opponent = "",
+                        GroupId = "",
                     });
         }
     }

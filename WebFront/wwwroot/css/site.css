@@ -68,3 +68,8 @@ body {
 .player2 {
     background-color: #fff;
 }
+
+.disabled-div {
+    opacity: 0.5;
+    pointer-events: none; 
+}

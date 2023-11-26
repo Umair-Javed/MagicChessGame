@@ -3,6 +3,7 @@ using Common.Library.Services;
 using Microsoft.AspNetCore.SignalR;
 using WebFront.BackgroundServices;
 using WebFront.ConfigModels;
+using WebFront.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 

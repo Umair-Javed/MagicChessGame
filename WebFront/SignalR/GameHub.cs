@@ -1,15 +1,17 @@
 ﻿using Common.Library.Interfaces;
+using Microsoft.AspNet.SignalR.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using WebFront.SignalR;
 
-public class GameHub : Hub
+public class GameHub : Hub, IGameHub
 {
     private readonly IMongoDBService _mongoDBService;
-
     public GameHub(IMongoDBService mongoDBService)
     {
         _mongoDBService = mongoDBService;
     }
-    public async Task FlipCoin()
+
+    public async Task FlipCoin(string SessionId, string GroupId)
     {
         // Broadcast the coin flip to all connected clients
         //await Clients.All.SendAsync("CoinFlipped");
@@ -18,23 +20,28 @@ public class GameHub : Hub
         //Groupname should be combination of user1,user2,token
         //Fetch tableId
         //Fetch tableHTML
-        var tableHTML = _mongoDBService.GetSessionBySessionOrGroupId("655f9f566d63483e20a2b7ed",null);
+        if (Clients != null)
+        {
+            var tableHTML = _mongoDBService.GetSessionBySessionOrGroupId(SessionId, GroupId);
 
-        /// Session Insert entry
-       
-        //
-        await Clients.Group("HU").SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
+            /// Session Insert entry
+
+            //
+            if (tableHTML != null)
+            {
+                await Clients.All.SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
+               // await Clients.Group(GroupId).SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
+            }
+        }
     }
 
-    public async Task AddToGameGroup(string tableId)
+    public async Task AddToGameGroup(string connectionId, string groupId)
     {
-        tableId = "HU"; //GetTableId
-        await Groups.AddToGroupAsync(Context.ConnectionId, tableId);
+        await Groups.AddToGroupAsync(connectionId, groupId);
     }
 
-    public async Task RemoveFromGameGroup(string tableId)
+    public async Task RemoveFromGameGroup(string connectionId, string groupId)
     {
-        tableId = "HU";
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, tableId);
+        await Groups.RemoveFromGroupAsync(connectionId, groupId);
     }
 }

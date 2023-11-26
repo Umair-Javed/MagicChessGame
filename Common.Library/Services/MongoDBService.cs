@@ -109,7 +109,7 @@ namespace Common.Library.Services
             return opponent;
         }
 
-        public Task<bool> IsUsernameAlreadyExist(string username)
+        public Task<UserDetail> GetUserDetail(string username)
         {
             var collection = _database.GetCollection<UserDetail>("UserDetail");
 
@@ -120,7 +120,7 @@ namespace Common.Library.Services
             var existingUser = collection.Find(filter).FirstOrDefault();
 
             // Return true if a user with the given username already exists, otherwise return false
-            return Task.FromResult(existingUser != null);
+            return Task.FromResult(existingUser);
         }
     }
 }

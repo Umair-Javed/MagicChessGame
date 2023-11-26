@@ -13,6 +13,6 @@ namespace Common.Library.Interfaces
         GameSession GetSessionBySessionOrGroupId(string sessionId, string groupId);
         Task AddUserDetail(UserDetail userDetail);
         Task UpdateUserDetail(UserDetail userDetail);
-        Task<bool> IsUsernameAlreadyExist(string username);
+        Task<UserDetail> GetUserDetail(string username);
     }
 }

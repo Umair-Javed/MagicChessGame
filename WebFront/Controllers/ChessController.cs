@@ -37,7 +37,7 @@ namespace WebFront.Controllers
         }
 
 
-        public IActionResult GameIndex(string MainPlayer = "", string Opponent = "", string GroupId = "")
+        public IActionResult GameIndex(string MainPlayer = "", string Opponent = "", string GroupId = "", string SessionId="")
         {
             if (!_serverStatusService.IsServerRunning)
             {
@@ -46,13 +46,20 @@ namespace WebFront.Controllers
             }
 
             var model = new ChessViewModel();
+            model.SessionId = SessionId;
+
             var existingToken = _cookieService.GetExistingToken(HttpContext);
-            if (existingToken == null)
+            if (existingToken == null || (!string.IsNullOrEmpty(MainPlayer) && !string.IsNullOrEmpty(Opponent)))
             {
                 model.GroupId = GroupId;
                 model.MainPlayer = _playerService.InitialzePlayer(MainPlayer, PlayerType.MAIN);
                 model.OpponentPlayer = _playerService.InitialzePlayer(Opponent, PlayerType.OPPONENT);
                 model.Coins = _playerService.GenerateShuffledList();
+                if (!string.IsNullOrEmpty(Opponent))
+                {
+                    model.IsGameStarted = true;
+                    model.IsDisabled = false;
+                }
             }
             else
             {
@@ -60,10 +67,27 @@ namespace WebFront.Controllers
                 existingSession = _mongoDBService.GetSessionBySessionOrGroupId(existingToken.SessionId, existingSession.GroupId);
                 if (existingSession != null)
                 {
+                   // model.GroupId = GroupId;
                     model.SessionId = existingSession.Id;
                     model.MainPlayer = _playerService.InitialzePlayerWithExistingSession(existingSession, PlayerType.MAIN);
                     model.OpponentPlayer = _playerService.InitialzePlayerWithExistingSession(existingSession, PlayerType.OPPONENT);
                     model.ChessBoardHtml = existingSession.ChessBoardHtml;
+                    model.IsGameStarted = true;
+                    model.IsDisabled = false;
+                    model.IsNewSession = false;
+                }
+                else
+                {
+                    model.GroupId = GroupId;
+                    model.MainPlayer = _playerService.InitialzePlayer(MainPlayer, PlayerType.MAIN);
+                    model.OpponentPlayer = _playerService.InitialzePlayer(Opponent, PlayerType.OPPONENT);
+                    model.Coins = _playerService.GenerateShuffledList();
+                    if (!string.IsNullOrEmpty(Opponent))
+                    {
+                        model.IsGameStarted = true;
+                        model.IsDisabled = false;
+                    }
+
                 }
             }
 
@@ -83,7 +107,7 @@ namespace WebFront.Controllers
 
             var sessionId = _mongoDBService.UpdateSession(model);
             _cookieService.SetSessionCookie(HttpContext, model.GroupId, sessionId);
-            return Json(new { IsSuccess = true, Message = "Success" });
+            return Json(new { IsSuccess = true, Message = "Success", SessionId = sessionId });
         }
 
         public IActionResult ServerError()

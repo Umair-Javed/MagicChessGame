@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Common.Library.Enums;
 
 namespace Common.Library.MongoDbEntities
 {
@@ -13,6 +14,7 @@ namespace Common.Library.MongoDbEntities
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
+        public PlayerType Type { get; set; }
         public string UserName { get; set; }
         public string GroupId { get; set; }
         public string ConnectionId { get; set; }

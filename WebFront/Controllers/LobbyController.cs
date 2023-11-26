@@ -36,7 +36,7 @@ namespace WebFront.Controllers
         public async Task<IActionResult> InitializeGame(string Username, string ConnectionId)
         {
             MatchMakingServices matchMakingServices = new MatchMakingServices();
-            var mainPlayerDetail = new UserDetail();
+            var playerDetail = new UserDetail();
             var existingUser = await _mongoDBService.GetUserDetail(Username);
             if (existingUser != null)
             {
@@ -47,13 +47,13 @@ namespace WebFront.Controllers
                 }
                 else
                 {
-                    mainPlayerDetail = existingUser;
-                    mainPlayerDetail.ConnectionId = ConnectionId;
+                    playerDetail = existingUser;
+                    playerDetail.ConnectionId = ConnectionId;
                 }
             }
             else
             {
-                mainPlayerDetail = new UserDetail
+                playerDetail = new UserDetail
                 {
                     UserName = Username,
                     IsOnline = true,
@@ -62,48 +62,49 @@ namespace WebFront.Controllers
                     ConnectionId = ConnectionId
                 };
 
-                await _mongoDBService.AddUserDetail(mainPlayerDetail);
+                await _mongoDBService.AddUserDetail(playerDetail);
             }
 
-            var opponentDetail = matchMakingServices.GetOpponent(Username);
-            if (opponentDetail != null)
+            var playerOnWaiting = matchMakingServices.GetOpponent(Username);
+            if (playerOnWaiting != null)
             {
                 var groupId = Guid.NewGuid().ToString();
 
                 // update main player status
-                mainPlayerDetail.GroupId = groupId;
-                mainPlayerDetail.IsPlaying = true;
-                mainPlayerDetail.IsOnline = true;
-                await _mongoDBService.UpdateUserDetail(mainPlayerDetail);
+                playerDetail.GroupId = groupId;
+                playerDetail.IsPlaying = true;
+                playerDetail.IsOnline = true;
+                playerDetail.Type = Common.Library.Enums.PlayerType.OPPONENT;
+                await _mongoDBService.UpdateUserDetail(playerDetail);
 
                 // update opponent status
-                opponentDetail.GroupId = groupId;
-                opponentDetail.IsPlaying = true;
-                opponentDetail.IsOnline = true;
+                playerOnWaiting.GroupId = groupId;
+                playerOnWaiting.IsPlaying = true;
+                playerOnWaiting.IsOnline = true;
+                playerOnWaiting.Type = Common.Library.Enums.PlayerType.MAIN;
 
-                await _mongoDBService.UpdateUserDetail(opponentDetail);
+                await _mongoDBService.UpdateUserDetail(playerOnWaiting);
 
                 // write cookie in client browser
                 _cookieService.SetSessionCookie(HttpContext, groupId, "", ConnectionId);
 
                 await _hubContext.Groups.AddToGroupAsync(ConnectionId, groupId); // assign a group to main player
-                await _hubContext.Groups.AddToGroupAsync(opponentDetail.ConnectionId, groupId); // assign same group to the opponent
+                await _hubContext.Groups.AddToGroupAsync(playerOnWaiting.ConnectionId, groupId); // assign same group to the opponent
                 //await _hubContext.Clients.All.SendAsync("CoinFlipped", "");                                                                                 // Get the list of connections in the group
 
                 return RedirectToAction("GameIndex", "Chess",
                     new
                     {
-                        MainPlayer = mainPlayerDetail.UserName,
-                        Opponent = opponentDetail.UserName,
+                        MainPlayer = playerOnWaiting.UserName,
+                        Opponent = playerDetail.UserName,
                         GroupId = groupId,
-                      //  SessionId = 
                     });
             }
 
             return RedirectToAction("GameIndex", "Chess",
                     new
                     {
-                        MainPlayer = mainPlayerDetail.UserName,
+                        MainPlayer = playerDetail.UserName,
                         Opponent = "",
                         GroupId = "",
                     });

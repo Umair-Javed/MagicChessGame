@@ -81,6 +81,7 @@ namespace Common.Library.Services
                 .Set(s => s.IsOnline, userDetail.IsOnline)
                 .Set(s => s.GroupId, userDetail.GroupId)
                 .Set(s => s.IsPlaying, userDetail.IsPlaying)
+                .Set(s => s.Type, userDetail.Type)
                 .Set(s => s.ConnectionId, userDetail.ConnectionId);
 
             collection.UpdateOne(filter, update);

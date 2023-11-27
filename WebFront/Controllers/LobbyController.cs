@@ -4,6 +4,8 @@ using Common.Library.Services;
 using Microsoft.AspNet.SignalR.Messaging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Text.RegularExpressions;
+using WebFront.Models;
 using WebFront.SignalR;
 
 namespace WebFront.Controllers
@@ -33,10 +35,11 @@ namespace WebFront.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> InitializeGame(string Username, string ConnectionId)
+        public async Task<IActionResult> InitializeGame(string Username)
         {
             MatchMakingServices matchMakingServices = new MatchMakingServices();
             var playerDetail = new UserDetail();
+            var groupId = Guid.NewGuid().ToString();
             var existingUser = await _mongoDBService.GetUserDetail(Username);
             if (existingUser != null)
             {
@@ -48,7 +51,7 @@ namespace WebFront.Controllers
                 else
                 {
                     playerDetail = existingUser;
-                    playerDetail.ConnectionId = ConnectionId;
+                    playerDetail.GroupId = groupId;
                 }
             }
             else
@@ -59,7 +62,7 @@ namespace WebFront.Controllers
                     IsOnline = true,
                     IsPlaying = false,
                     CreatedOn = DateTime.Now,
-                    ConnectionId = ConnectionId
+                    GroupId = groupId
                 };
 
                 await _mongoDBService.AddUserDetail(playerDetail);
@@ -68,8 +71,7 @@ namespace WebFront.Controllers
             var playerOnWaiting = matchMakingServices.GetOpponent(Username);
             if (playerOnWaiting != null)
             {
-                var groupId = Guid.NewGuid().ToString();
-
+                groupId = playerOnWaiting.GroupId; // assign group of Main User to Opponent
                 // update main player status
                 playerDetail.GroupId = groupId;
                 playerDetail.IsPlaying = true;
@@ -86,28 +88,38 @@ namespace WebFront.Controllers
                 await _mongoDBService.UpdateUserDetail(playerOnWaiting);
 
                 // write cookie in client browser
-                _cookieService.SetSessionCookie(HttpContext, groupId, "", ConnectionId);
+                _cookieService.SetSessionCookie(HttpContext, groupId, "");
 
-                await _hubContext.Groups.AddToGroupAsync(ConnectionId, groupId); // assign a group to main player
-                await _hubContext.Groups.AddToGroupAsync(playerOnWaiting.ConnectionId, groupId); // assign same group to the opponent
-                //await _hubContext.Clients.All.SendAsync("CoinFlipped", "");                                                                                 // Get the list of connections in the group
+                var gameIndexModel = new GameIndexModel
+                {
+                    GroupId = groupId,
+                    MainPlayer = playerOnWaiting.UserName,
+                    Opponent = playerDetail.UserName,
+                    SessionId = ""
+                };
 
-                return RedirectToAction("GameIndex", "Chess",
-                    new
-                    {
-                        MainPlayer = playerOnWaiting.UserName,
-                        Opponent = playerDetail.UserName,
-                        GroupId = groupId,
-                    });
+                TempData["IndexModel"] = Newtonsoft.Json.JsonConvert.SerializeObject(gameIndexModel);
+            }
+            else
+            {
+                var gameIndexModel = new GameIndexModel
+                {
+                    GroupId = groupId,
+                    MainPlayer = playerDetail.UserName,
+                    Opponent = "Waiting...",
+                    SessionId = ""
+                };
+
+                TempData["IndexModel"] = Newtonsoft.Json.JsonConvert.SerializeObject(gameIndexModel);
             }
 
-            return RedirectToAction("GameIndex", "Chess",
-                    new
-                    {
-                        MainPlayer = playerDetail.UserName,
-                        Opponent = "",
-                        GroupId = "",
-                    });
+            return RedirectToAction("GameIndex", "Chess");
+        }
+
+        public ActionResult GameOver(string Winner)
+        {
+            ViewBag.Winner = Winner;
+            return View();
         }
     }
 }

@@ -14,9 +14,11 @@ namespace WebFront.Models
         public string? ChessBoardHtml { get; set; }
         public string? GroupId { get; set; }
         public string? SessionId { get; set; }
-        public bool IsGameStarted { get; internal set; }
+        public bool IsGameStarted { get; set; }
         public bool IsNewSession { get; set; } = true; 
-        public bool IsDisabled { get; internal set; } = true;
+        public bool IsDisabled { get; set; } = true;
         public List<CoinsModel> Coins { get; set; }
+        public string MainPlayerHubConnection { get; set; }
+        public string OpponentHubConnection { get; set; }
     }
 }

@@ -11,6 +11,8 @@
 <input type="hidden" id="IsDisabled" value="@Model.IsDisabled" />
 <input type="hidden" id="SessionId" value="@Model.SessionId" />
 <input type="hidden" id="IsGameStarted" value="@Model.IsGameStarted" />
+<input type="hidden" id="MoveNotAllowedToConnectionId" value="0" />
+
 
 <div class="row">
     <div class="col-md-2">
@@ -26,32 +28,32 @@
         </div>
     </div>
     <div class="col-md-10">
-        <div id="chessboard-container" class="@(Model.IsDisabled?"disabled-div":"")">
+        <div id="chessboard-container">
             @{
                 if (Model.IsNewSession)
                 {
                     int row = 1;
                     for (int i = 0; i <= Model.RowSize; i++)
                     {
-                            <div class="chessboard-row">
-                                @{
+                                            <div class="chessboard-row @(Model.IsDisabled?"disabled-div":"")">
+                                                @{
                                 int col = 1;
                                 foreach (var item in Model.Coins.Skip(i * 8).Take(8))
                                 {
-                                            <div class="chessboard-cell player@((int)item.Type)">
-                                                <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
-                                            </div>
+                                                                            <div class="chessboard-cell player@((int)item.Type)">
+                                                                                <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
+                                                                            </div>
                                     col++;
                                 }
 
-                                }
-                            </div>
+                                                }
+                                            </div>
                         row++;
                     }
                 }
                 else
                 {
-                        @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
+                                        @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
                 }
             }
         </div>
@@ -61,13 +63,72 @@
 
 <audio id="audioPlayer1" src="/sounds/move-self.mp3"></audio>
 <audio id="audioPlayer2" src="/sounds/move-check.mp3"></audio>
-<audio id="audioVictory" src="/sounds/victory.mp3"></audio>
 
 <script>
     $(document).ready(function () {
 
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/gameHub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        // Start the connection initially
+        startConnection();
+
+        hubConnection.onclose((error) => {
+            console.log(`Connection closed. Reconnecting...`);
+
+            // Restart the connection and add to the game group with a new connection ID
+            startConnection();
+        });
+
+        hubConnection.on("CoinFlipped", (boardHtml, turn, opponent, connectionId) => {
+            debugger;
+            if (boardHtml) {
+                $("#chessboard-container").html(boardHtml);
+            }
+            if (turn) {
+                if (turn == @((int)PlayerType.MAIN)) {
+                    $("#mainPlayerTurn").val("");
+                    $("#opponentPlayerTurn").val("value");
+                    $("#player1Div").css("background", "transparent");
+                    $("#player2Div").css("background", "yellow");
+                    $("#opponentPlayerName").text(opponent);
+                    var audio = $("#audioPlayer1")[0];
+                    audio.play();
+                }
+                else {
+                    $("#mainPlayerTurn").val("value");
+                    $("#opponentPlayerTurn").val("");
+                    $("#player2Div").css("background", "transparent");
+                    $("#player1Div").css("background", "yellow");
+                    $("#opponentPlayerName").text(opponent);
+                    var audio = $("#audioPlayer2")[0];
+                    audio.play();
+                }
+            }
+            if (connectionId) {
+                $("#MoveNotAllowedToConnectionId").val(connectionId);
+            }
+        });
+
+        hubConnection.on("GameOverResponse", (redirectUrl) => {
+            debugger;
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            }
+        });
+
+
         $(document).on("click", ".chess-piece", function () {
             debugger;
+
+            var connectionId = $("#MoveNotAllowedToConnectionId").val();
+            if (connectionId != "0") {
+                if (connectionId == hubConnection.connectionId){
+                    return false;
+                }
+            }
 
             var mainPlayerTurn = $("#mainPlayerTurn").val();
             var opponentPlayerTurn = $("#opponentPlayerTurn").val();
@@ -79,6 +140,7 @@
             if (isExposed == "1") { // if already flipped
 
                 var addBordersAlreadyApplied = $('.addBorders')[0];
+
                 if (mainPlayerTurn == "value" && player == "1") { // valid main player move
 
                     if ($(this).hasClass("addBorders")) {
@@ -131,6 +193,13 @@
 
             ChangeTurn();
         })
+
+        function startConnection() {
+            hubConnection.start().then(() => {
+                console.log("Connection started");
+                hubConnection.invoke("AddToGameGroup", hubConnection.connectionId, $("#GroupId").val());
+            }).catch(err => console.error(err));
+        }
 
         function ValidateCaptureMove(This) {
             debugger;
@@ -279,20 +348,19 @@
 
         function ShowWinAlert(playerId) {
 
-            var audio = $("#audioVictory")[0];
-            audio.play();
-
             if (playerId == 1) {
                 var playername = $("#mainPlayerName").text();
-                alert(playername + " WINS");
-                // location.reload();
+                GameOver(playername, $("#GroupId").val());
             }
             else {
                 var playername = $("#opponentPlayerName").text();
-                alert(playername + " WINS");
-                //location.reload();
+                GameOver(playername, $("#GroupId").val());
             }
 
+        }
+
+        function GameOver(playerName, groupId) {
+            hubConnection.invoke("GameOver", playerName, groupId);
         }
 
         function UpdateSession(playerId) {
@@ -302,7 +370,6 @@
             var groupId = $("#GroupId").val();
             var mainPlayerId = $("#mainPlayerName").text();
             var opponentId = $("#opponentPlayerName").text();
-
             $.ajax({
                 url: '@Url.Action("UpdateSession", "Chess")',
                 type: 'POST',
@@ -323,7 +390,7 @@
                         sessionId = result.sessionId;
                     }
 
-                    CallHubFlipCoin(sessionId, groupId);
+                    hubConnection.invoke("FlipCoin", sessionId, groupId, playerId, opponentId, hubConnection.connectionId);
                 },
                 error: function (xhr, status, error) {
                     // Handle the error response

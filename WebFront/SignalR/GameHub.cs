@@ -1,5 +1,5 @@
-﻿using Common.Library.Interfaces;
-using Microsoft.AspNet.SignalR.Hubs;
+﻿using Common.Library.Enums;
+using Common.Library.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using WebFront.SignalR;
 
@@ -11,27 +11,26 @@ public class GameHub : Hub, IGameHub
         _mongoDBService = mongoDBService;
     }
 
-    public async Task FlipCoin(string SessionId, string GroupId)
+    public async Task FlipCoin(string SessionId, string GroupId, PlayerType Turn, string OpponentId, string ConnectionId)
     {
-        // Broadcast the coin flip to all connected clients
-        //await Clients.All.SendAsync("CoinFlipped");
+        // Turn = Turn == PlayerType.MAIN ? PlayerType.OPPONENT : PlayerType.MAIN;
 
-        // Broadcast the coin flip to all clients in the "gameGroup"
-        //Groupname should be combination of user1,user2,token
-        //Fetch tableId
-        //Fetch tableHTML
         if (Clients != null)
         {
             var tableHTML = _mongoDBService.GetSessionBySessionOrGroupId(SessionId, GroupId);
-
-            /// Session Insert entry
-
-            //
             if (tableHTML != null)
             {
-                await Clients.All.SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
-                //await Clients.Group(GroupId).SendAsync("CoinFlipped", tableHTML.ChessBoardHtml);
+                await Clients.Group(GroupId).SendAsync("CoinFlipped", tableHTML.ChessBoardHtml, (int)Turn, OpponentId, ConnectionId);
             }
+        }
+    }
+    public async Task GameOver(string PlayerName, string GroupId)
+    {
+        if (Clients != null)
+        {
+            var redirectUrl = "/Lobby/GameOver?Winner=" + PlayerName;
+            await _mongoDBService.DeleteGameSession(GroupId);
+            await Clients.Group(GroupId).SendAsync("GameOverResponse", redirectUrl);
         }
     }
 

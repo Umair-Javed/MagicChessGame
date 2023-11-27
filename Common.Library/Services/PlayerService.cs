@@ -2,7 +2,6 @@
 using Common.Library.Interfaces;
 using Common.Library.Models;
 using Common.Library.MongoDbEntities;
-using System.Numerics;
 
 namespace Common.Library.Services
 {
@@ -13,7 +12,7 @@ namespace Common.Library.Services
             return new PlayerModel
             {
                 IsCoinExposed = false,
-                IsMyTurn = type == PlayerType.MAIN ? true : false,
+                IsMyTurn = type == PlayerType.MAIN ? false : true,
                 Name = name,
                 Type = type,
                 UserIcon = $"/Content/Images/Player{(int)type}/0.png"
@@ -43,7 +42,7 @@ namespace Common.Library.Services
             {
                 Name = type == PlayerType.MAIN ? session.MainPlayerId : session.OpponentId,
                 Type = type,
-                IsMyTurn = ((session.Turn == PlayerType.MAIN) && type == PlayerType.MAIN) ? true : false,
+                IsMyTurn = ((session.Turn == PlayerType.MAIN) && type == PlayerType.MAIN) ? false : true,
                 UserIcon = $"/Content/Images/Player{(int)type}/0.png"
             };
         }

@@ -123,5 +123,16 @@ namespace Common.Library.Services
             // Return true if a user with the given username already exists, otherwise return false
             return Task.FromResult(existingUser);
         }
+
+        public async Task DeleteGameSession(string groupId)
+        {
+            var collection = _database.GetCollection<GameSession>("GameSession");
+
+            if (!string.IsNullOrEmpty(groupId))
+            {
+                var filterByGroupId = Builders<GameSession>.Filter.Eq("GroupId", groupId);
+                await collection.DeleteOneAsync(filterByGroupId);
+            }
+        }
     }
 }

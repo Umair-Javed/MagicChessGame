@@ -14,5 +14,6 @@ namespace Common.Library.Interfaces
         Task AddUserDetail(UserDetail userDetail);
         Task UpdateUserDetail(UserDetail userDetail);
         Task<UserDetail> GetUserDetail(string username);
+        Task DeleteGameSession(string groupId);
     }
 }

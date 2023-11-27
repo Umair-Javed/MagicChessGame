@@ -34,16 +34,37 @@ namespace WebFront.Controllers
         }
 
 
-        public IActionResult GameIndex(string MainPlayer = "", string Opponent = "", string GroupId = "", string SessionId = "")
+        public IActionResult GameIndex()
         {
             if (!_serverStatusService.IsServerRunning)
                 return RedirectToAction("ServerError");
 
-            if (string.IsNullOrEmpty(MainPlayer))
-                return RedirectToAction("Index","Lobby");
-
             var model = new ChessViewModel();
-            model.SessionId = SessionId;
+
+            if (TempData["IndexModel"] != null)
+            {
+                string? serializedIndexModel = Convert.ToString(TempData["IndexModel"]);
+                if (serializedIndexModel != null)
+                {
+                    var indexModel = Newtonsoft.Json.JsonConvert.DeserializeObject<GameIndexModel>(serializedIndexModel);
+                    if (indexModel != null)
+                    {
+                        if (string.IsNullOrEmpty(indexModel.MainPlayer))
+                            return RedirectToAction("Index", "Lobby");
+
+                        model.SessionId = indexModel.SessionId;
+                        model.GroupId = indexModel.GroupId;
+                        model.MainPlayer = _playerService.InitialzePlayer(indexModel.MainPlayer, PlayerType.MAIN);
+                        model.OpponentPlayer = _playerService.InitialzePlayer(indexModel.Opponent, PlayerType.OPPONENT);
+                        model.Coins = _playerService.GenerateShuffledList();
+                        if (!string.IsNullOrEmpty(indexModel.Opponent) && indexModel.Opponent!= "Waiting...")
+                        {
+                            model.IsGameStarted = true;
+                            model.IsDisabled = false;
+                        }
+                    }
+                }
+            }
 
             //var existingToken = _cookieService.GetExistingToken(HttpContext);
             //if (existingToken != null)
@@ -63,16 +84,6 @@ namespace WebFront.Controllers
             //        return View(model);
             //    }
             //}
-
-            model.GroupId = GroupId;
-            model.MainPlayer = _playerService.InitialzePlayer(MainPlayer, PlayerType.MAIN);
-            model.OpponentPlayer = _playerService.InitialzePlayer(Opponent, PlayerType.OPPONENT);
-            model.Coins = _playerService.GenerateShuffledList();
-            if (!string.IsNullOrEmpty(Opponent))
-            {
-                model.IsGameStarted = true;
-                model.IsDisabled = false;
-            }
 
             return View(model);
         }

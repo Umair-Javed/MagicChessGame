@@ -9,11 +9,22 @@ using System.Threading.Tasks;
 
 namespace Common.Library.Services
 {
+    // Represents a service for token encryption and decryption.
     public class TokenService : ITokenService
     {
-        private const string Key = "yourSecretKey12345678901234567890"; // Replace with a strong and secret password
-        private const string Salt = "yourSalt1234567890"; // Replace with a unique salt
+        #region Constants
 
+        // Replace with a strong and secret password
+        private const string Key = "yourSecretKey12345678901234567890";
+
+        // Replace with a unique salt
+        private const string Salt = "yourSalt1234567890";
+
+        #endregion
+
+        #region Token Encryption
+
+        // Encrypts the provided data into a token.
         public string EncryptToken(object data)
         {
             string jsonData = JsonConvert.SerializeObject(data);
@@ -39,6 +50,11 @@ namespace Common.Library.Services
             }
         }
 
+        #endregion
+
+        #region Token Decryption
+
+        // Decrypts the provided token into the specified type.
         public T DecryptToken<T>(string encryptedData)
         {
             using (Aes aesAlg = Aes.Create())
@@ -62,6 +78,11 @@ namespace Common.Library.Services
             }
         }
 
+        #endregion
+
+        #region Key Derivation
+
+        // Derives a key for encryption and decryption.
         private byte[] DeriveKey()
         {
             using (Rfc2898DeriveBytes keyDerivationFunction = new Rfc2898DeriveBytes(Key, Encoding.UTF8.GetBytes(Salt), 10000, HashAlgorithmName.SHA256))
@@ -69,5 +90,7 @@ namespace Common.Library.Services
                 return keyDerivationFunction.GetBytes(32); // 256 bits
             }
         }
+
+        #endregion
     }
 }

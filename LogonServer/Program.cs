@@ -2,34 +2,51 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 
-TcpListener tcpListener = new TcpListener(IPAddress.Any, 5258);
-tcpListener.Start();
-
-Console.WriteLine("Server is listening...");
-
-while (true)
+class Program
 {
-    TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
-    HandleClient(tcpClient);
-}
-
-
-static async void HandleClient(TcpClient tcpClient)
-{
-    using (NetworkStream stream = tcpClient.GetStream())
+    static async Task Main(string[] args)
     {
-        byte[] buffer = new byte[1024];
-        int bytesRead;
+        // Setup TCP listener on any available IP address and port 5258
+        TcpListener tcpListener = new TcpListener(IPAddress.Any, 5258);
+        tcpListener.Start();
 
-        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        Console.WriteLine("Server is listening...");
+
+        // Accept incoming connections and handle clients in an infinite loop
+        while (true)
         {
-            string message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
-            Console.WriteLine($"Received: {message}");
-
-            byte[] responseBuffer = Encoding.ASCII.GetBytes("Message received successfully");
-            await stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
+            TcpClient tcpClient = await tcpListener.AcceptTcpClientAsync();
+            HandleClient(tcpClient);
         }
     }
 
-    tcpClient.Close();
+    #region Handle Client
+
+    // Handle communication with a connected client
+    static async void HandleClient(TcpClient tcpClient)
+    {
+        // Get the network stream for reading and writing data
+        using (NetworkStream stream = tcpClient.GetStream())
+        {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            // Read data from the client in a loop
+            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                // Convert the received bytes to a string message
+                string message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                Console.WriteLine($"Received: {message}");
+
+                // Send a response back to the client
+                byte[] responseBuffer = Encoding.ASCII.GetBytes("Message received successfully");
+                await stream.WriteAsync(responseBuffer, 0, responseBuffer.Length);
+            }
+        }
+
+        // Close the TCP client connection
+        tcpClient.Close();
+    }
+
+    #endregion
 }

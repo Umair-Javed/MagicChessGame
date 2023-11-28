@@ -1,9 +1,4 @@
 ﻿using Common.Library.MongoDbEntities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Common.Library.Interfaces
 {
@@ -15,5 +10,7 @@ namespace Common.Library.Interfaces
         Task UpdateUserDetail(UserDetail userDetail);
         Task<UserDetail> GetUserDetail(string username);
         Task DeleteGameSession(string groupId);
+        Task DeleteUserDetail(string playerId);
+        UserDetail GetOpponent(string mainPlayerName);
     }
 }

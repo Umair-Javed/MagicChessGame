@@ -10,20 +10,38 @@ using WebFront.SignalR;
 
 namespace WebFront.Controllers
 {
+    // Controller responsible for Lobby-related actions
     public class LobbyController : Controller
     {
+        #region Dependencies
+
         private readonly IHubContext<GameHub> _hubContext;
         private readonly IMongoDBService _mongoDBService;
         private readonly ICookieService _cookieService;
+        private readonly IMatchMakingServices _matchMakingService;
+
+        #endregion
+
+        #region Constructor
+
+        // Constructor for LobbyController
         public LobbyController(
             IMongoDBService mongoDBService,
             ICookieService cookieService,
-            IHubContext<GameHub> hubContext)
+            IHubContext<GameHub> hubContext,
+            IMatchMakingServices matchMakingService)
         {
             _mongoDBService = mongoDBService;
             _cookieService = cookieService;
             _hubContext = hubContext;
+            _matchMakingService = matchMakingService;
         }
+
+        #endregion
+
+        #region Action Methods
+
+        // Action method for rendering the Lobby index view
         public IActionResult Index()
         {
             if (TempData["WarningMsg"] != null)
@@ -33,11 +51,11 @@ namespace WebFront.Controllers
             return View();
         }
 
+        // Action method for initializing a new game
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> InitializeGame(string Username)
         {
-            MatchMakingServices matchMakingServices = new MatchMakingServices();
             var playerDetail = new UserDetail();
             var groupId = Guid.NewGuid().ToString();
             var existingUser = await _mongoDBService.GetUserDetail(Username);
@@ -68,11 +86,11 @@ namespace WebFront.Controllers
                 await _mongoDBService.AddUserDetail(playerDetail);
             }
 
-            var playerOnWaiting = matchMakingServices.GetOpponent(Username);
+            var playerOnWaiting = _matchMakingService.GetOpponent(Username);
             if (playerOnWaiting != null)
             {
                 groupId = playerOnWaiting.GroupId; // assign group of Main User to Opponent
-                // update main player status
+                                                   // update main player status
                 playerDetail.GroupId = groupId;
                 playerDetail.IsPlaying = true;
                 playerDetail.IsOnline = true;
@@ -116,10 +134,14 @@ namespace WebFront.Controllers
             return RedirectToAction("GameIndex", "Chess");
         }
 
+        // Action method for rendering the GameOver view
         public ActionResult GameOver(string Winner)
         {
             ViewBag.Winner = Winner;
             return View();
         }
+
+        #endregion
     }
+
 }

@@ -1,47 +1,12 @@
 ﻿<style>
     body {
-        background: url('https://wallpapers.com/images/hd/still-white-and-black-chess-king-uqpqtgzn0xm9anfk.jpg') center/cover;
+        background: url('https://ik.imagekit.io/idhgmnvrqc/win_compressed.jpg?updatedAt=1701107255502') center/cover;
     }
-
-    #game-over-container {
-        text-align: center;
-        margin-top: 20%;
-        color: white;
-        font-family: 'Arial', sans-serif;
-    }
-
-    #winner-message {
-        font-size: 36px;
-        margin-bottom: 30px;
-    }
-
-    #winner-name {
-        font-size: 48px;
-        color: #ad00ff;
-        font-weight: bold;
-    }
-
-    #play-again-button {
-        margin-top: 20px;
-        height: 50px;
-        width: 150px;
-        font-size: large;
-        background: #ad00ff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-        #play-again-button:hover {
-            background: #7a007a;
-        }
 </style>
 
 <div id="game-over-container">
     <h2 id="winner-message">Game Over!</h2>
-    <p>The winner is:</p>
-    <h1 id="winner-name">Hammad</h1>
+    <h1 id="winner-name">@ViewBag.Winner WON!</h1>
     <button id="play-again-button" onclick="playAgain()">Play Again</button>
 </div>
 

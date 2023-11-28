@@ -1,25 +1,38 @@
-﻿using Common.Library.Interfaces;
+﻿using Common.Library.ConfigModels;
+using Common.Library.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Net.Sockets;
 using System.Text;
-using WebFront.ConfigModels;
 
 namespace WebFront.BackgroundServices
 {
     //Background service to ping the server periodically
     public class PingBackgroundService : BackgroundService
     {
+        #region Fields
+
+        // Service to manage the status of the server
         private readonly IServerStatusService _serverStatusService;
-        private readonly IConfiguration _configuration;
+
+        // Settings for the logon server
         private readonly LogonServerSettings _serverSettings;
 
-        public PingBackgroundService(IServerStatusService serverStatusService, IConfiguration configuration, IOptions<LogonServerSettings> serverSettings)
+        #endregion
+
+        #region Constructor
+
+        // Constructor for PingBackgroundService
+        public PingBackgroundService(IServerStatusService serverStatusService, IOptions<LogonServerSettings> serverSettings)
         {
             _serverStatusService = serverStatusService;
-            _configuration = configuration;
             _serverSettings = serverSettings.Value;
         }
 
+        #endregion
+
+        #region Background Service Execution
+
+        // Implementation of the background service execution
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -30,11 +43,13 @@ namespace WebFront.BackgroundServices
                     {
                         using (NetworkStream stream = tcpClient.GetStream())
                         {
+                            // Send a ping message to the server
                             string message = "Ping from client!";
                             byte[] buffer = Encoding.ASCII.GetBytes(message);
 
                             await stream.WriteAsync(buffer, 0, buffer.Length);
 
+                            // Receive and process the server's response
                             buffer = new byte[1024];
                             int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
 
@@ -61,5 +76,8 @@ namespace WebFront.BackgroundServices
                 await Task.Delay(TimeSpan.FromSeconds(10));
             }
         }
+
+        #endregion
     }
+
 }

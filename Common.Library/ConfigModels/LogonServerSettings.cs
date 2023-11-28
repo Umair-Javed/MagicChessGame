@@ -1,4 +1,4 @@
-﻿namespace WebFront.ConfigModels
+﻿namespace Common.Library.ConfigModels
 {
     public class LogonServerSettings
     {

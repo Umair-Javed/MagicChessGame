@@ -1,25 +1,64 @@
-﻿using Common.Library.Enums;
+﻿using Common.Library.ConfigModels;
+using Common.Library.Enums;
 using Common.Library.Interfaces;
 using Common.Library.MongoDbEntities;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Core.Configuration;
 
 namespace Common.Library.Services
 {
+    // Represents a service for interacting with MongoDB.
     public class MongoDBService : IMongoDBService
     {
+        #region Constructor and Private Properties
+        // MongoDB database instance.
         private readonly IMongoDatabase _database;
-        public readonly string connectionString = "mongodb+srv://hammadurrehman26:Admin%40123**@mycluster.b9pkgxd.mongodb.net/?retryWrites=true&w=majority";
-        public readonly string databaseName = "ChessDB";
 
-        public MongoDBService()
+        // Configuration settings for MongoDB connection.
+        private readonly ConnectionStrings _connectionSettings;
+
+        // Configuration settings for MongoDB.
+        private readonly MongoDBSettings _mongoDBSettings;
+
+        // Connection string for MongoDB.
+        private readonly string _connectionString;
+
+        // Collection name for MongoDB user data.
+        private readonly string _userCollectionName;
+
+        // Collection name for MongoDB session data.
+        private readonly string _sessionCollectionName;
+
+        // Constructor for MongoDBService, taking connection settings through dependency injection.
+        public MongoDBService(IOptions<ConnectionStrings> connectionSettings, IOptions<MongoDBSettings> mongoDBSettings)
         {
-            var client = new MongoClient(connectionString);
-            _database = client.GetDatabase(databaseName);
+            // Initialize connection settings.
+            _connectionSettings = connectionSettings.Value;
+
+            // Set the connection string.
+            _connectionString = _connectionSettings.MongoDBConnection;
+
+            // Initialize MongoDB settings.
+            _mongoDBSettings = mongoDBSettings.Value;
+
+            // Create a MongoDB client using the connection string.
+            var client = new MongoClient(_connectionString);
+
+            // Get the MongoDB database using the specified database name.
+            _database = client.GetDatabase(_mongoDBSettings.DatabaseName);
+
+            // Set the collection names for user and session data.
+            _userCollectionName = _mongoDBSettings.UserCollectionName;
+            _sessionCollectionName = _mongoDBSettings.SessionCollectionName;
         }
+        #endregion
+
+        #region Mongo DB Methods
         public string UpdateSession(GameSession session)
         {
-            var collection = _database.GetCollection<GameSession>("GameSession");
+            var collection = _database.GetCollection<GameSession>(_sessionCollectionName);
 
             // Check if _id is null to determine if it's an insert or update
             if (session.Id == null)
@@ -44,7 +83,7 @@ namespace Common.Library.Services
 
         public GameSession GetSessionBySessionOrGroupId(string sessionId, string groupId)
         {
-            var collection = _database.GetCollection<GameSession>("GameSession");
+            var collection = _database.GetCollection<GameSession>(_sessionCollectionName);
 
             if (!string.IsNullOrEmpty(sessionId))
             {
@@ -65,16 +104,15 @@ namespace Common.Library.Services
             }
         }
 
-
         public async Task AddUserDetail(UserDetail userDetail)
         {
-            var collection = _database.GetCollection<UserDetail>("UserDetail");
+            var collection = _database.GetCollection<UserDetail>(_userCollectionName);
             await collection.InsertOneAsync(userDetail);
         }
 
         public async Task UpdateUserDetail(UserDetail userDetail)
         {
-            var collection = _database.GetCollection<UserDetail>("UserDetail");
+            var collection = _database.GetCollection<UserDetail>(_userCollectionName);
             var filter = Builders<UserDetail>.Filter.Eq("_id", ObjectId.Parse(userDetail.Id));
 
             var update = Builders<UserDetail>.Update
@@ -89,7 +127,7 @@ namespace Common.Library.Services
 
         public UserDetail GetOpponent(string mainPlayerName)
         {
-            var collection = _database.GetCollection<UserDetail>("UserDetail");
+            var collection = _database.GetCollection<UserDetail>(_userCollectionName);
 
             // Define your filter criteria
             var filter = Builders<UserDetail>.Filter.Where(u =>
@@ -112,7 +150,7 @@ namespace Common.Library.Services
 
         public Task<UserDetail> GetUserDetail(string username)
         {
-            var collection = _database.GetCollection<UserDetail>("UserDetail");
+            var collection = _database.GetCollection<UserDetail>(_userCollectionName);
 
             // Define the filter criteria to check if a user with the specified username exists
             var filter = Builders<UserDetail>.Filter.Where(u => u.UserName == username);
@@ -126,7 +164,7 @@ namespace Common.Library.Services
 
         public async Task DeleteGameSession(string groupId)
         {
-            var collection = _database.GetCollection<GameSession>("GameSession");
+            var collection = _database.GetCollection<GameSession>(_sessionCollectionName);
 
             if (!string.IsNullOrEmpty(groupId))
             {
@@ -134,5 +172,17 @@ namespace Common.Library.Services
                 await collection.DeleteOneAsync(filterByGroupId);
             }
         }
+
+        public async Task DeleteUserDetail(string playerId)
+        {
+            var collection = _database.GetCollection<UserDetail>(_userCollectionName);
+
+            if (!string.IsNullOrEmpty(playerId))
+            {
+                var filterByUserName = Builders<UserDetail>.Filter.Eq("UserName", playerId);
+                await collection.DeleteOneAsync(filterByUserName);
+            }
+        }
+        #endregion
     }
 }

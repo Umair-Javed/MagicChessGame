@@ -18,11 +18,14 @@ body {
 }
 
 .gameTitle {
-    border-bottom: 3px solid;
+    border-bottom: 4px solid #670000;
     text-align: center;
+    color: white;
+    font-family: ui-monospace;
     padding-bottom: 8px;
     padding-top: 8px;
-    background: #e0e0e0;
+    background: linear-gradient(45deg, #b80005, #6000c1);
+    box-shadow: 0 5px 3px #6ea1ff;
 }
 
 .emptyImg {
@@ -56,7 +59,7 @@ body {
 }
 
 .chessboard-cell {
-    border: 1px solid #000;
+    border: 2px solid #6f6f6f;
     box-sizing: border-box;
     cursor: pointer;
 }
@@ -72,4 +75,93 @@ body {
 .disabled-div {
     opacity: 0.5;
     pointer-events: none; 
+}
+
+#player1Div {
+    padding-left: 30px;
+    background: #c9c9cc;
+    border-bottom-right-radius: 100px;
+    border-top-right-radius: 100px;
+    width: 380px;
+}
+#player2Div {
+    padding-left: 30px;
+    background: #ffbabc;
+    border-bottom-right-radius: 100px;
+    border-top-right-radius: 100px;
+    width: 380px;
+}
+#game-over-container {
+    text-align: center;
+    margin-top: 10%;
+    color: white;
+    font-family: 'Arial', sans-serif;
+}
+
+#winner-message {
+    font-size: 80px;
+    -webkit-text-stroke-width: thin;
+    -webkit-text-stroke-color: #f6f6f6;
+    font-weight: bolder;
+    color: black;
+    margin-bottom: 30px;
+}
+
+#winner-name {
+    font-weight: bolder;
+    color: white;
+    font-size: 100px;
+}
+
+#play-again-button {
+    margin-top: 20px;
+    height: 50px;
+    width: 150px;
+    font-size: large;
+    background: #323232;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+    #play-again-button:hover {
+        background: black;
+    }
+
+#lobby-container {
+    text-align: center;
+}
+
+#username-input {
+    height: 80px;
+    width: 500px;
+    border: 3px solid #ad00ff;
+    box-shadow: 7px 6px 17px #156ae0;
+    font-size: 30px;
+    text-align: center;
+}
+
+#play-button {
+    margin-top: 50px;
+    height: 80px;
+    width: 200px;
+    font-size: xx-large;
+    background: black;
+    box-shadow: 3px 10px 10px;
+}
+
+    #play-button:hover {
+        color: white;
+    }
+
+#gameTitle {
+    color: white;
+    margin-bottom: 200px;
+    margin-top: -200px;
+    font-size: 55px;
+    font-weight: 900;
+    font-variant: petite-caps;
+    -webkit-text-stroke-width: thin;
+    -webkit-text-stroke-color: darkblue;
 }

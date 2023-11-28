@@ -1,72 +1,79 @@
 ﻿@using Common.Library.Enums;
 @model WebFront.Models.ChessViewModel
 @{
-    ViewData["Title"] = "Magic Chess Board";
+    ViewData["Title"] = "UBISOFT - MAGIC CHESS GAME";
 }
 
-<h2 class="gameTitle">@ViewData["Title"]</h2>
+<h2 class="gameTitle"> @ViewData["Title"]</h2>
 <br />
 
+<!-- Hidden input fields for game state -->
 <input type="hidden" id="GroupId" value="@Model.GroupId" />
 <input type="hidden" id="IsDisabled" value="@Model.IsDisabled" />
 <input type="hidden" id="SessionId" value="@Model.SessionId" />
 <input type="hidden" id="IsGameStarted" value="@Model.IsGameStarted" />
 <input type="hidden" id="MoveNotAllowedToConnectionId" value="0" />
 
-
+<!-- Game board layout -->
 <div class="row">
     <div class="col-md-2">
-        <div class="user-div" id="player1Div" style="background: @(Model.MainPlayer.IsMyTurn?"yellow":"transparent")">
+        <!-- Player 1 Information -->
+        <div class="user-div" id="player1Div" style="padding-left:30px;background: @(Model.MainPlayer.IsMyTurn?"#c9c9c9":"transparent")">
             <img width="30" height="30" src="@Url.Content(Model.MainPlayer.UserIcon)" />
             <h3 id="mainPlayerName" style="margin-left:10px;margin-top: -5px;">@Model.MainPlayer.Name</h3>
             <input type="hidden" id="mainPlayerTurn" value="@Model.MainPlayer.IsMyTurn" />
         </div>
-        <div class="user-div" id="player2Div" style="background: @(Model.OpponentPlayer.IsMyTurn?"yellow":"transparent")">
+        <!-- Player 2 Information -->
+        <div class="user-div" id="player2Div" style="padding-left:30px;background: @(Model.OpponentPlayer.IsMyTurn?"#ffbabc":"transparent")">
             <img width="30" height="30" src="@Url.Content(Model.OpponentPlayer.UserIcon)" />
             <h3 id="opponentPlayerName" style="margin-left:10px;margin-top: -5px;">@Model.OpponentPlayer.Name</h3>
             <input type="hidden" id="opponentPlayerTurn" value="@Model.OpponentPlayer.IsMyTurn" />
         </div>
     </div>
     <div class="col-md-10">
+        <!-- Chessboard container -->
         <div id="chessboard-container">
             @{
                 if (Model.IsNewSession)
                 {
+                    <!-- Initial chessboard setup -->
                     int row = 1;
                     for (int i = 0; i <= Model.RowSize; i++)
                     {
-                                            <div class="chessboard-row @(Model.IsDisabled?"disabled-div":"")">
-                                                @{
+                        <div class="chessboard-row @(Model.IsDisabled?"disabled-div":"")">
+                            @{
                                 int col = 1;
                                 foreach (var item in Model.Coins.Skip(i * 8).Take(8))
                                 {
-                                                                            <div class="chessboard-cell player@((int)item.Type)">
-                                                                                <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
-                                                                            </div>
+                                    <div class="chessboard-cell player@((int)item.Type)">
+                                        <img id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" data-id="img_@(i)_@(col)_@(item.Number)_@((int)item.Type)" width="100" height="100" data-isexposed="0" data-next="@(item.ImgPath)" data-col="@col" data-row="@row" data-priority="@(item.Number)" data-player="@((int)item.Type)" data-current="@(Model.FlippedIconUrl)" src="@Url.Content(Model.FlippedIconUrl)" alt="Chess Piece" class="chess-piece ImgPlayer_@((int)item.Type)" />
+                                    </div>
                                     col++;
                                 }
 
-                                                }
-                                            </div>
+                            }
+                        </div>
                         row++;
                     }
                 }
                 else
                 {
-                                        @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
+                    <!-- Load chessboard from existing session -->
+                    @await Html.PartialAsync("ChessBoard", Model.ChessBoardHtml)
                 }
             }
         </div>
     </div>
 </div>
 
-
+<!-- Audio elements for game sounds -->
 <audio id="audioPlayer1" src="/sounds/move-self.mp3"></audio>
 <audio id="audioPlayer2" src="/sounds/move-check.mp3"></audio>
 
 <script>
     $(document).ready(function () {
 
+        // SignalR hub connection initialization and configuration
         const hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/gameHub")
             .configureLogging(signalR.LogLevel.Information)
@@ -75,6 +82,12 @@
         // Start the connection initially
         startConnection();
 
+        // Event listener for handling page unload
+        window.addEventListener('beforeunload', function (event) {
+            GameOver("YOU", $("#GroupId").val());
+        });
+
+        // Handle connection close and attempt to reconnect
         hubConnection.onclose((error) => {
             console.log(`Connection closed. Reconnecting...`);
 
@@ -82,50 +95,54 @@
             startConnection();
         });
 
+        // Handle the event when the coin is flipped
         hubConnection.on("CoinFlipped", (boardHtml, turn, opponent, connectionId) => {
-            debugger;
+            // Update the chessboard display
             if (boardHtml) {
                 $("#chessboard-container").html(boardHtml);
             }
+
+            // Update player turns and display information
             if (turn) {
                 if (turn == @((int)PlayerType.MAIN)) {
                     $("#mainPlayerTurn").val("");
                     $("#opponentPlayerTurn").val("value");
                     $("#player1Div").css("background", "transparent");
-                    $("#player2Div").css("background", "yellow");
+                    $("#player2Div").css("background", "#ffbabc");
                     $("#opponentPlayerName").text(opponent);
                     var audio = $("#audioPlayer1")[0];
                     audio.play();
-                }
-                else {
+                } else {
                     $("#mainPlayerTurn").val("value");
                     $("#opponentPlayerTurn").val("");
                     $("#player2Div").css("background", "transparent");
-                    $("#player1Div").css("background", "yellow");
+                    $("#player1Div").css("background", "#c9c9c9");
                     $("#opponentPlayerName").text(opponent);
                     var audio = $("#audioPlayer2")[0];
                     audio.play();
                 }
             }
+
+            // Update the connection ID if provided
             if (connectionId) {
                 $("#MoveNotAllowedToConnectionId").val(connectionId);
             }
         });
 
+        // Handle the event when the game is over
         hubConnection.on("GameOverResponse", (redirectUrl) => {
-            debugger;
+            // Redirect to the specified URL
             if (redirectUrl) {
                 window.location.href = redirectUrl;
             }
         });
 
-
+        // Handle the click event on a chess piece
         $(document).on("click", ".chess-piece", function () {
-            debugger;
 
             var connectionId = $("#MoveNotAllowedToConnectionId").val();
             if (connectionId != "0") {
-                if (connectionId == hubConnection.connectionId){
+                if (connectionId == hubConnection.connectionId) {
                     return false;
                 }
             }
@@ -133,15 +150,19 @@
             var mainPlayerTurn = $("#mainPlayerTurn").val();
             var opponentPlayerTurn = $("#opponentPlayerTurn").val();
 
+            // Get information about the chess piece
             var currentUrl = $(this).attr("data-current");
             var nextUrl = $(this).attr("data-next");
             var player = $(this).attr("data-player");
             var isExposed = $(this).attr("data-isexposed");
-            if (isExposed == "1") { // if already flipped
 
+            // Check if the chess piece is already flipped
+            if (isExposed == "1") {
                 var addBordersAlreadyApplied = $('.addBorders')[0];
 
-                if (mainPlayerTurn == "value" && player == "1") { // valid main player move
+                // Handle different cases based on player turns and moves
+                if (mainPlayerTurn == "value" && player == "1") {
+                    // Valid main player move
 
                     if ($(this).hasClass("addBorders")) {
                         $('.addBorders').removeClass("addBorders");
@@ -152,11 +173,8 @@
                         $(this).addClass("addBorders");
                         return false; // remain on same player
                     }
-
-                    ChangeTurn();
-                    return false;
-                }
-                else if (opponentPlayerTurn == "value" && player == "2") { // valid oponent move
+                } else if (opponentPlayerTurn == "value" && player == "2") {
+                    // Valid opponent move
 
                     if ($(this).hasClass("addBorders")) {
                         $('.addBorders').removeClass("addBorders");
@@ -167,33 +185,30 @@
                         $(this).addClass("addBorders");
                         return false; // remain on same player
                     }
-
-                    ChangeTurn();
-                    return false;
-                }
-                else if (mainPlayerTurn == "value" && (player == "2" || player == "0")) { // main player trying to capture opponent
+                } else if (mainPlayerTurn == "value" && (player == "2" || player == "0")) {
+                    // Main player trying to capture opponent
                     ValidateCaptureMove(this);
                     return false;
-                }
-                else if (opponentPlayerTurn == "value" && (player == "1" || player == "0")) { // opponent trying to capture main player
+                } else if (opponentPlayerTurn == "value" && (player == "1" || player == "0")) {
+                    // Opponent trying to capture main player
                     ValidateCaptureMove(this);
                     return false;
-                }
-                else {
+                } else {
                     return false;
                 }
-
             }
 
+            // Flip the chess piece
             $(this).attr("data-current", nextUrl);
             $(this).attr("data-next", currentUrl);
             $(this).attr("src", nextUrl);
             $(this).attr("data-isexposed", "1");
 
-
+            // Update turns and game state
             ChangeTurn();
-        })
+        });
 
+        // Function to start the SignalR connection
         function startConnection() {
             hubConnection.start().then(() => {
                 console.log("Connection started");
@@ -201,35 +216,37 @@
             }).catch(err => console.error(err));
         }
 
+        // Function to validate capture moves
         function ValidateCaptureMove(This) {
-            debugger;
             var addBordersAlreadyApplied = $('.addBorders')[0];
             var mainPlayerTurn = $("#mainPlayerTurn").val();
             var opponentPlayerTurn = $("#opponentPlayerTurn").val();
-
             var currentUrl = This.dataset.current;
             var nextUrl = This.dataset.next;
             var player = This.dataset.player;
             var isExposed = This.dataset.isexposed;
 
+            // Check if a chess piece has already been selected for capture
             if (addBordersAlreadyApplied != undefined) {
                 if (This.classList.contains("addBorders")) {
                     $('.addBorders').removeClass("addBorders");
-                    return false; // remain on same player
+                    return false; // remain on the same player
                 }
 
+                // Compare priorities to determine the validity of the capture move
                 var opponentCellPriority = parseInt(This.dataset.priority);
                 var mainCellPriority = parseInt(addBordersAlreadyApplied.dataset.priority);
 
-                if (mainCellPriority >= opponentCellPriority
-                    || mainCellPriority == 1 && opponentCellPriority == 7
-                    || opponentCellPriority == 0) {
+                if (mainCellPriority >= opponentCellPriority ||
+                    mainCellPriority == 1 && opponentCellPriority == 7 ||
+                    opponentCellPriority == 0) {
 
                     var sourceCol = parseInt(addBordersAlreadyApplied.dataset.col);
                     var sourceRow = parseInt(addBordersAlreadyApplied.dataset.row);
                     var targetCol = parseInt(This.dataset.col);
                     var targetRow = parseInt(This.dataset.row);
 
+                    // Validate the move based on source and target coordinates
                     if (IsValidMove(sourceCol, sourceRow, targetCol, targetRow)) {
                         This.classList.remove('ImgPlayer_' + This.dataset.player);
                         This.src = addBordersAlreadyApplied.dataset.current;
@@ -242,34 +259,32 @@
                         var playerId = addBordersAlreadyApplied.dataset.player;
                         This.classList.add('ImgPlayer_' + This.dataset.player);
                         ClearCell(addBordersAlreadyApplied.dataset.id);
-                        capturePiece(This);
+
+                        // Check for win conditions
                         if (mainCellPriority == @((int)enCoins.PAWN) && opponentCellPriority == @((int)enCoins.KING)) {
                             ShowWinAlert(playerId);
                             return false;
-                        }
-
-                        else if (mainCellPriority == @((int)enCoins.KING) && opponentCellPriority == @((int)enCoins.KING)) {
+                        } else if (mainCellPriority == @((int)enCoins.KING) && opponentCellPriority == @((int)enCoins.KING)) {
+                            ShowWinAlert(playerId);
+                            return false;
+                        } else if (!CheckIfOpponentCellRemaining(playerId)) {
                             ShowWinAlert(playerId);
                             return false;
                         }
 
-                        else if (!CheckIfOpponentCellRemaining(playerId)) {
-                            ShowWinAlert(playerId);
-                            return false;
-                        }
-
+                        // Change turn after a successful capture
                         ChangeTurn();
                         return false;
                     }
                     return false;
-                }
-                else {
+                } else {
                     $('.addBorders').removeClass("addBorders");
                     return false;
                 }
             }
         }
 
+        // Function to change turns and update player information
         function ChangeTurn() {
             var mainPlayerTurn = $("#mainPlayerTurn").val();
             var opponentPlayerTurn = $("#opponentPlayerTurn").val();
@@ -279,41 +294,22 @@
                 $("#mainPlayerTurn").val("");
                 $("#opponentPlayerTurn").val("value");
                 $("#player1Div").css("background", "transparent");
-                $("#player2Div").css("background", "yellow");
+                $("#player2Div").css("background", "#ffbabc");
                 UpdateSession(@((int)PlayerType.MAIN));
                 var audio = $("#audioPlayer1")[0];
                 audio.play();
-            }
-            else {
+            } else {
                 $("#mainPlayerTurn").val("value");
                 $("#opponentPlayerTurn").val("");
                 $("#player2Div").css("background", "transparent");
-                $("#player1Div").css("background", "yellow");
+                $("#player1Div").css("background", "#c9c9c9");
                 UpdateSession(@((int)PlayerType.OPPONENT));
                 var audio = $("#audioPlayer2")[0];
                 audio.play();
             }
         }
 
-        function capturePiece(piece) {
-            var containerWidth = $(".chessboard-cell").width();
-            var containerHeight = $(".chessboard-cell").height();
-
-            var maxX = containerWidth - piece.width;
-            var maxY = containerHeight - piece.height;
-
-            var randomX = Math.floor(Math.random() * maxX);
-            var randomY = Math.floor(Math.random() * maxY);
-
-            piece.animate({
-                left: randomX,
-                top: randomY,
-                opacity: 0
-            }, 300, function () {
-                piece.hide(); // Hide the piece after animation completes
-            });
-        }
-
+        // Function to clear a cell after a successful capture
         function ClearCell(cellId) {
             var transparentImagePath = '/Content/Images/transparent.png';
             $('#' + cellId).attr("src", transparentImagePath);
@@ -326,8 +322,9 @@
             $('#' + cellId).removeClass("ImgPlayer_2");
         }
 
+        // Function to check if a move is valid based on source and target coordinates
         function IsValidMove(sourceCol, sourceRow, targetCol, targetRow) {
-            // Check if capture is consecutive horizontally or vertically
+            // Check if the capture is consecutive horizontally or vertically
             if ((Math.abs(sourceCol - targetCol) === 1 && sourceRow === targetRow) ||
                 (Math.abs(sourceRow - targetRow) === 1 && sourceCol === targetCol)) {
                 return true;
@@ -336,35 +333,34 @@
             }
         }
 
+        // Function to check if any opponent's chess piece is remaining on the board
         function CheckIfOpponentCellRemaining(playerId) {
             var cellRemaining = $('.ImgPlayer_' + playerId)[0];
             if (cellRemaining != undefined) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
 
+        // Function to show a win alert and invoke the GameOver function
         function ShowWinAlert(playerId) {
-
             if (playerId == 1) {
                 var playername = $("#mainPlayerName").text();
                 GameOver(playername, $("#GroupId").val());
-            }
-            else {
+            } else {
                 var playername = $("#opponentPlayerName").text();
                 GameOver(playername, $("#GroupId").val());
             }
-
         }
 
+        // Function to invoke the GameOver function on the server
         function GameOver(playerName, groupId) {
             hubConnection.invoke("GameOver", playerName, groupId);
         }
 
+        // Function to update the game session on the server
         function UpdateSession(playerId) {
-
             var sessionId = $("#SessionId").val();
             var chessBoardHtml = $("#chessboard-container").html();
             var groupId = $("#GroupId").val();
@@ -384,20 +380,20 @@
                 success: function (result) {
                     if (!result.isSuccess && result.isRedirect) {
                         window.location.href = result.redirectUrl;
-                    }
-                    else if (result.isSuccess) {
+                    } else if (result.isSuccess) {
                         $("#SessionId").val(result.sessionId);
                         sessionId = result.sessionId;
                     }
 
+                    // Invoke the FlipCoin function after updating the session
                     hubConnection.invoke("FlipCoin", sessionId, groupId, playerId, opponentId, hubConnection.connectionId);
                 },
                 error: function (xhr, status, error) {
                     // Handle the error response
-                    //console.error(xhr.responseText);
+                    // console.error(xhr.responseText);
                 }
             });
         }
+    });
 
-    })
 </script>
